@@ -1,15 +1,12 @@
 package main
 
 import (
-	"context"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func DotEnv(key string) string {
@@ -20,37 +17,6 @@ func DotEnv(key string) string {
 		}
 	}
 	return os.Getenv(key)
-}
-
-type MongoDBClient struct {
-	client     *mongo.Client
-	collection *mongo.Collection
-}
-
-func newPortfolioDbClient() (*MongoDBClient, error) {
-
-	connectionStr := DotEnv("DB_URI")
-	dbName := "portfolioitems"
-	collectionName := "casestudies"
-
-	ctx := context.Background()
-	logLvl := options.LogLevel(5)
-	loggerOpts := options.Logger().SetComponentLevel(options.LogComponentAll, logLvl)
-	clientOpts := options.
-		Client().
-		ApplyURI(connectionStr).
-		SetLoggerOptions(loggerOpts)
-
-	client, err := mongo.Connect(ctx, clientOpts)
-	if err != nil {
-		log.Print(err)
-		// TODO: Recover from this error
-		panic(err)
-	}
-
-	collection := client.Database(dbName).Collection(collectionName)
-
-	return &MongoDBClient{client, collection}, err
 }
 
 type Label struct {
@@ -66,39 +32,7 @@ type Link struct {
 }
 
 func getAllLinks() []Link {
-
-	links := []Link{{
-		Name: "First link",
-		Url:  "http://example.com/",
-		Labels: []Label{
-			{
-				Id:   1,
-				Name: "LabelOne",
-			},
-			{
-				Id:   2,
-				Name: "LabelTwo",
-			},
-		},
-		Created_date: "20230909",
-	},
-		{
-			Name: "Second link",
-			Url:  "http://example.com/",
-			Labels: []Label{
-				{
-					Id:   1,
-					Name: "LabelOne",
-				},
-				{
-					Id:   3,
-					Name: "LabelThree",
-				},
-			},
-			Created_date: "20230909",
-		}}
-
-	return links
+	return linksStub
 }
 
 var indexHandler = func(w http.ResponseWriter, r *http.Request) {
@@ -106,54 +40,43 @@ var indexHandler = func(w http.ResponseWriter, r *http.Request) {
 	temp.Execute(w, getAllLinks())
 }
 
-func createLinkHandler(Link) Link {
+func createLink(Link) Link {
 	log.Println("Creating new link")
-	link := Link{
-		Name: "First link",
-		Url:  "http://example.com/",
-		Labels: []Label{
-			{
-				Id:   1,
-				Name: "LabelOne",
-			},
-			{
-				Id:   2,
-				Name: "LabelTwo",
-			},
-		},
-		Created_date: "20230909",
-	}
-	return link
+	return linkStub
 }
 
-func getLinkHandler(linkId int) Link {
+var createLinkHandler = func(w http.ResponseWriter, r *http.Request) {
+	temp := template.Must(template.ParseFiles("./templates/new.html"))
+	temp.Execute(w, nil)
+}
+
+func getLink(linkId int) Link {
 	log.Println("Getting link with ID", linkId)
-	link := Link{
-		Name: "First link",
-		Url:  "http://example.com/",
-		Labels: []Label{
-			{
-				Id:   1,
-				Name: "LabelOne",
-			},
-			{
-				Id:   2,
-				Name: "LabelTwo",
-			},
-		},
-		Created_date: "20230909",
-	}
-	return link
+	return linkStub
 }
 
-func updateLinkHandler(linkId int, updatedLink Link) Link {
+var getLinkHandler = func(w http.ResponseWriter, r *http.Request) {
+	temp := template.Must(template.ParseFiles("./templates/link.html"))
+	temp.Execute(w, nil)
+}
+
+func updateLink(linkId int, updatedLink Link) Link {
 	log.Println("Updating link with ID:", linkId)
-	return updatedLink
+	return linkStub
 }
 
-func deleteLinkHandler(linkId int) bool {
+var updateLinkHandler = func(w http.ResponseWriter, r *http.Request) {
+	temp := template.Must(template.ParseFiles("./template/link.html"))
+	temp.Execute(w, nil)
+}
+
+func deleteLink(linkId int) bool {
 	log.Println("Deleting link with ID:", linkId)
 	return true
+}
+
+var deleteLinkHandler = func(w http.ResponseWriter, r *http.Request) {
+	return
 }
 
 func main() {
@@ -168,79 +91,40 @@ func main() {
 	// - PUT update_link
 	// - DELETE delete_link
 
-	/* 	CONTROLLER METHODS
-	   	list_all_linkz
-	   		uses Find() to get all links
-	   		returns all Links */
-
+	/* 	list_all_linkz
+	uses Find() to get all links
+	returns all Links
+	*/
 	http.HandleFunc("/", indexHandler)
-
-	links := getAllLinks()
-
-	for i, l := range links {
-		log.Print(i, l)
-	}
 
 	/*  create_link
 	takes Link
 	uses save(Link) to create a new link
-	returns the new Link */
-
-	createdLink := Link{
-		Name: "Created link",
-		Url:  "http://example.com/",
-		Labels: []Label{
-			{
-				Id:   1,
-				Name: "LabelOne",
-			},
-			{
-				Id:   2,
-				Name: "LabelTwo",
-			},
-		},
-		Created_date: "20230909",
-	}
-
-	createLinkHandler(createdLink)
+	returns the new Link
+	*/
+	http.HandleFunc("/link/new", createLinkHandler)
 
 	/*	read_link
 		takes Link.Id
 		uses findOne(Link.Id) to get a single link
-		returns a Link */
+		returns a Link
+	*/
 
-	getLinkHandler(1)
+	http.HandleFunc("/link/", getLinkHandler)
 
 	/*	update_link
 		takes Link.Id and Link
 		uses findOneAndUpdate to modify an existing link
-		returns the updated link */
-
-	updatedLink := Link{
-		Name: "Updated link",
-		Url:  "http://example.com/",
-		Labels: []Label{
-			{
-				Id:   1,
-				Name: "LabelOne",
-			},
-			{
-				Id:   2,
-				Name: "LabelTwo",
-			},
-		},
-		Created_date: "20230909",
-	}
-
-	updateLinkHandler(1, updatedLink)
+		returns the updated link
+	*/
+	http.HandleFunc("/link/update", updateLinkHandler)
 
 	/*	delete_link
 		takes Link.Id
 		uses Remove(Link.Id)
 		returns the deleted link?
 	*/
-
-	deleteLinkHandler(1)
+	http.HandleFunc("/link/delete", deleteLinkHandler)
 
 	http.ListenAndServe(":3000", nil)
 
