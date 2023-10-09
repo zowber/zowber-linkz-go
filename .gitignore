@@ -1,0 +1,6 @@
+.env
+tmp/
+vendor/
+.air*
+server.key
+server.pem
