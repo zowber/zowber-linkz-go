@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"html/template"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -99,6 +101,11 @@ func getAllLinks() []Link {
 	return links
 }
 
+var indexHandler = func(w http.ResponseWriter, r *http.Request) {
+	temp := template.Must(template.ParseFiles("./templates/index.html"))
+	temp.Execute(w, getAllLinks())
+}
+
 func createLinkHandler(Link) Link {
 	log.Println("Creating new link")
 	link := Link{
@@ -166,6 +173,8 @@ func main() {
 	   		uses Find() to get all links
 	   		returns all Links */
 
+	http.HandleFunc("/", indexHandler)
+
 	links := getAllLinks()
 
 	for i, l := range links {
@@ -177,7 +186,23 @@ func main() {
 	uses save(Link) to create a new link
 	returns the new Link */
 
-	createLinkHandler()
+	createdLink := Link{
+		Name: "Created link",
+		Url:  "http://example.com/",
+		Labels: []Label{
+			{
+				Id:   1,
+				Name: "LabelOne",
+			},
+			{
+				Id:   2,
+				Name: "LabelTwo",
+			},
+		},
+		Created_date: "20230909",
+	}
+
+	createLinkHandler(createdLink)
 
 	/*	read_link
 		takes Link.Id
@@ -216,5 +241,7 @@ func main() {
 	*/
 
 	deleteLinkHandler(1)
+
+	http.ListenAndServe(":3000", nil)
 
 }
