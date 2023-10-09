@@ -20,19 +20,6 @@ func DotEnv(key string) string {
 	return os.Getenv(key)
 }
 
-type Label struct {
-	Id   int
-	Name string
-}
-
-type Link struct {
-	Id           int
-	Name         string
-	Url          string
-	Labels       []Label
-	Created_date string
-}
-
 var errorHandler = func(w http.ResponseWriter, r *http.Request, statusCode int) {
 	w.WriteHeader(statusCode)
 	temp := template.Must(template.ParseFiles("./templates/error.html"))
