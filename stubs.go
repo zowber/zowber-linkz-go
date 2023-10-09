@@ -1,6 +1,7 @@
 package main
 
 var linksStub = []Link{{
+	Id:   1,
 	Name: "First link",
 	Url:  "http://example.com/",
 	Labels: []Label{
@@ -32,6 +33,7 @@ var linksStub = []Link{{
 	}}
 
 var linkStub = Link{
+	Id:   2,
 	Name: "First link",
 	Url:  "http://example.com/",
 	Labels: []Label{
