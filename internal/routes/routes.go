@@ -1,26 +1,27 @@
-package main
+package routes
 
 import (
-	"html/template"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
+	"text/template"
 
-	"github.com/joho/godotenv"
+	"github.com/zowber/zowber-linkz-go/internal/data"
+	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
 )
 
-func DotEnv(key string) string {
-	if os.Getenv(key) == "" {
-		err := godotenv.Load(".env")
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	return os.Getenv(key)
-}
+var db, err = data.NewPortfolioDbClient()
 
-var db, err = newPortfolioDbClient()
+func NewRouter() http.Handler {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", indexHandler)
+	mux.HandleFunc("/link/new", createHandler)
+	mux.HandleFunc("/link/edit", editHandler)
+	mux.HandleFunc("/link/delete", deleteHandler)
+
+	return mux
+}
 
 var errorHandler = func(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
 	w.WriteHeader(statusCode)
@@ -51,7 +52,7 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Got name %s and url %s from form.", name, url)
 
-	newLink, err := db.Insert(Link{Name: name, Url: url})
+	newLink, err := db.Insert(&linkzapp.Link{Name: name, Url: url})
 	if err != nil {
 		errorHandler(w, r, http.StatusInternalServerError, err)
 		return
@@ -86,7 +87,7 @@ var editHandler = func(w http.ResponseWriter, r *http.Request) {
 		name := r.PostFormValue("name")
 		url := r.PostFormValue("url")
 
-		link := Link{
+		link := &linkzapp.Link{
 			Id:   linkId,
 			Name: name,
 			Url:  url,
@@ -117,15 +118,4 @@ var deleteHandler = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-}
-
-func main() {
-	log.Println("Sup")
-
-	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/link/new", createHandler)
-	http.HandleFunc("/link/edit", editHandler)
-	http.HandleFunc("/link/delete", deleteHandler)
-
-	http.ListenAndServe(":3000", nil)
 }
