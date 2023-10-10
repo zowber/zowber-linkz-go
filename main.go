@@ -20,160 +20,112 @@ func DotEnv(key string) string {
 	return os.Getenv(key)
 }
 
-var errorHandler = func(w http.ResponseWriter, r *http.Request, statusCode int) {
+var db, err = newPortfolioDbClient()
+
+var errorHandler = func(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
 	w.WriteHeader(statusCode)
 	temp := template.Must(template.ParseFiles("./templates/error.html"))
-	temp.Execute(w, statusCode)
+	temp.Execute(w, err)
 }
-
-// func getAllLinks() []Link {
-// 	return linksStub
-// }
 
 var indexHandler = func(w http.ResponseWriter, r *http.Request) {
 
 	if r.URL.Path != "/" {
-		errorHandler(w, r, http.StatusNotFound)
+		errorHandler(w, r, http.StatusNotFound, err)
 		return
 	}
 
+	links, err := db.All()
+	if err != nil {
+		log.Print(err.Error())
+	}
+
 	temp := template.Must(template.ParseFiles("./templates/index.html"))
-	temp.Execute(w, linksStub)
+	temp.Execute(w, links)
 }
 
-// func createLink(Link) Link {
-// 	log.Println("Creating new link")
-// 	return linkStub
-// }
-
-var createLinkHandler = func(w http.ResponseWriter, r *http.Request) {
+var createHandler = func(w http.ResponseWriter, r *http.Request) {
 
 	name := r.PostFormValue("name")
 	url := r.PostFormValue("url")
 
-	log.Printf("Got name %s and url %s from form values.", name, url)
+	log.Printf("Got name %s and url %s from form.", name, url)
 
-	newLink := Link{
-		Name: name,
-		Url:  url,
+	newLink, err := db.Insert(Link{Name: name, Url: url})
+	if err != nil {
+		errorHandler(w, r, http.StatusInternalServerError, err)
+		return
 	}
 
 	temp := template.Must(template.ParseFiles("./templates/link.html"))
 	temp.Execute(w, newLink)
 }
 
-// func getLink(linkId int) Link {
-// 	log.Println("Getting link with ID", linkId)
-// 	return linkStub
-// }
-
-// var getLinkHandler = func(w http.ResponseWriter, r *http.Request) {
-// 	temp := template.Must(template.ParseFiles("./templates/link.html"))
-// 	temp.Execute(w, nil)
-// }
-
-// func editLink(linkId int, updatedLink Link) Link {
-// 	log.Println("Updating link with ID:", linkId)
-
-// 	return linkStub
-// }
-
-var editLinkHandler = func(w http.ResponseWriter, r *http.Request) {
-
-	log.Println("Req to edit with verb", r.Method)
+var editHandler = func(w http.ResponseWriter, r *http.Request) {
 
 	linkIdStr := r.URL.Query().Get("id")
 	linkId, err := strconv.Atoi(linkIdStr)
 	if err != nil {
-		errorHandler(w, r, http.StatusBadRequest)
+		errorHandler(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	switch r.Method {
 	case "GET":
-		log.Println("Req to edit link with Id", linkId)
 
-		linkToEdit := Link{
-			Id:   linkId,
-			Name: "Link to edit",
-			Url:  "http://aintitcool.com",
+		linkToEdit, err := db.One(linkId)
+		if err != nil {
+			errorHandler(w, r, http.StatusInternalServerError, err)
+			return
 		}
 
 		temp := template.Must(template.ParseFiles("./templates/edit.html"))
 		temp.Execute(w, linkToEdit)
+
 	case "PUT":
 		name := r.PostFormValue("name")
 		url := r.PostFormValue("url")
 
-		log.Printf("Got name %s and url %s from form values.", name, url)
-
-		newLink := Link{
+		link := Link{
 			Id:   linkId,
 			Name: name,
 			Url:  url,
 		}
 
+		updatedLink, err := db.Update(link)
+		if err != nil {
+			errorHandler(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
 		temp := template.Must(template.ParseFiles("./templates/link.html"))
-		temp.Execute(w, newLink)
+		temp.Execute(w, updatedLink)
 	}
 }
 
-// func deleteLink(linkId int) bool {
-// 	// Delete the link
-// 	return true
-// }
+var deleteHandler = func(w http.ResponseWriter, r *http.Request) {
+	linkIdStr := r.URL.Query().Get("id")
+	linkId, err := strconv.Atoi(linkIdStr)
+	if err != nil {
+		errorHandler(w, r, http.StatusBadRequest, err)
+		return
+	}
 
-var deleteLinkHandler = func(w http.ResponseWriter, r *http.Request) {
-	linkId := r.URL.Query().Get("id")
-	log.Println("Deleting the link with Id:", linkId)
+	err = db.Delete(linkId)
+	if err != nil {
+		errorHandler(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
 }
 
 func main() {
 	log.Println("Sup")
 
-	// API ROUTES
-	// /linkz
-	// - GET list_all_linkz
-	// - POST create_link
-	// /links/:linkId
-	// - GET read_link
-	// - PUT update_link
-	// - DELETE delete_link
-
 	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/link/new", createLinkHandler)
-	http.HandleFunc("/link/edit", editLinkHandler)
-	http.HandleFunc("/link/delete", deleteLinkHandler)
-
-	/*
-
-		list_all_linkz
-			uses Find() to get all links
-			returns all Links
-
-		create_link
-			takes Link
-			uses save(Link) to create a new link
-			returns the new Link
-
-		read_link
-			takes Link.Id
-			uses findOne(Link.Id) to get a single link
-			returns a Link
-
-		?? http.HandleFunc("/link/", getLinkHandler)
-
-		update_link
-			takes Link.Id and Link
-			uses findOneAndUpdate to modify an existing link
-			returns the updated link
-
-		delete_link
-			takes Link.Id
-			uses Remove(Link.Id)
-			returns the deleted link?
-	*/
+	http.HandleFunc("/link/new", createHandler)
+	http.HandleFunc("/link/edit", editHandler)
+	http.HandleFunc("/link/delete", deleteHandler)
 
 	http.ListenAndServe(":3000", nil)
-
 }
