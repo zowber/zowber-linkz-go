@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	log.Println("Sup")
+	log.Println("Sup!")
 
 	router := routes.NewRouter()
 

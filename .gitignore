@@ -1,6 +1,6 @@
+.air*
 .env
+
+bin/
 tmp/
 vendor/
-.air*
-server.key
-server.pem
