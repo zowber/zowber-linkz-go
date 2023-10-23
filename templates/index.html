@@ -15,9 +15,9 @@
     <div class="container">
       <div class="row">
         <div class="col">
-          <h1>Zowber Links</h1>
+          <h1>Zowber Linkz</h1>
           <p>
-            <a href="https://github.com/zowber/zowber-links-go"
+            <a href="https://github.com/zowber/zowber-linkz-go"
               >github.com/zowber/zowber-links-go</a
             >
           </p>
@@ -27,46 +27,22 @@
     </div>
 
     <div class="container">
-      <div class="row">
+      <div class="row" id="new-link">
         <div class="col">
-          <h3>New Link</h3>
-          <form hx-post="/link/new" hx-target="#link-list" hx-swap="afterbegin">
-            <div class="row mb-3">
-              <label for="name" class="col-sm-2 col-form-label">Name</label>
-              <div class="col-sm-10">
-                <input type="text" class="form-control" name="name" />
-              </div>
-            </div>
-            <div class="row mb-3">
-              <label for="url" class="col-sm-2 col-form-label">Url</label>
-              <div class="col-sm-10">
-                <input type="url" class="form-control" name="url" />
-              </div>
-            </div>
-            <div class="row mb-3">
-              <label for="label" class="col-sm-2 col-form-label">Label</label>
-              <div class="col-sm-10">
-                <div class="input-group mb-3">
-                  <input type="text" class="form-control" name="label" />
-                  <button
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon2"
-                  >
-                    Add
-                  </button>
-                </div>
-              </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Save</button>
-            <button class="btn btn-outline-primary">Cancel</button>
-          </form>
-          <hr class="border border-secondary border-1 opacity-50" />
+          <button
+            class="btn btn-primary"
+            hx-get="/link/new"
+            hx-target="#new-link"
+          >
+            New Link
+          </button>
         </div>
       </div>
+      <hr class="border border-secondary border-1 opacity-50" />
       <div class="row">
         <div class="col">
           <h3>All Links</h3>
+          {{ if . }}
           <div class="list-group" id="link-list">
             {{ range . }}
             <div
@@ -100,8 +76,9 @@
                 </div>
               </div>
             </div>
-            {{ end }}
           </div>
+          {{ end }} {{ else }} No Links yet. Add one and you will see it here.
+          {{ end }}
         </div>
       </div>
     </div>

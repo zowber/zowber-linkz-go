@@ -35,7 +35,7 @@ func NewPortfolioDbClient() (*MongoDBClient, error) {
 	collectionName := "links"
 
 	ctx := context.Background()
-	logLvl := options.LogLevel(5)
+	logLvl := options.LogLevel(0)
 	loggerOpts := options.Logger().SetComponentLevel(options.LogComponentAll, logLvl)
 	clientOpts := options.
 		Client().
