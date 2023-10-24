@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/zowber/zowber-linkz-go/internal/data"
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
@@ -28,13 +29,13 @@ func NewRouter() http.Handler {
 
 var errorHandler = func(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
 	w.WriteHeader(statusCode)
-	temp := template.Must(template.ParseFiles("./templates/error.html"))
-	temp.Execute(w, err)
+	tmpl := template.Must(template.ParseFiles("./templates/error.html"))
+	tmpl.Execute(w, err)
 }
 
 var createPlaceholderHandler = func(w http.ResponseWriter, r *http.Request) {
-	temp := template.Must(template.ParseFiles("./templates/create-placeholder.html"))
-	temp.ExecuteTemplate(w, "create-placeholder", nil)
+	tmpl := template.Must(template.ParseFiles("./templates/create-placeholder.html"))
+	tmpl.ExecuteTemplate(w, "create-placeholder", nil)
 }
 
 var indexHandler = func(w http.ResponseWriter, r *http.Request) {
@@ -48,8 +49,8 @@ var indexHandler = func(w http.ResponseWriter, r *http.Request) {
 		log.Print(err.Error())
 	}
 
-	temp := template.Must(template.ParseFiles("./templates/index.html", "./templates/header.html", "./templates/create-placeholder.html", "./templates/links.html", "./templates/footer.html"))
-	temp.Execute(w, links)
+	tmpl := template.Must(template.ParseFiles("./templates/index.html", "./templates/header.html", "./templates/create-placeholder.html", "./templates/links.html", "./templates/link.html", "./templates/footer.html"))
+	tmpl.Execute(w, links)
 }
 
 var createHandler = func(w http.ResponseWriter, r *http.Request) {
@@ -57,8 +58,8 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		{
-			temp := template.Must(template.ParseFiles("./templates/create.html"))
-			temp.Execute(w, nil)
+			tmpl := template.Must(template.ParseFiles("./templates/create.html"))
+			tmpl.Execute(w, nil)
 		}
 	case "POST":
 		{
@@ -69,47 +70,47 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 			formRaw := r.Form
 			var labels []linkzapp.Label
 			for key, value := range formRaw {
-				if strings.Contains(key, "label-") {
+				if strings.Contains(key, "label_") {
 					labels = append(labels, linkzapp.Label{Id: len(labels), Name: value[0]})
 				}
 			}
 
-			newLink, err := db.Insert(&linkzapp.Link{Name: name, Url: url, Labels: labels})
+			newLink, err := db.Insert(&linkzapp.Link{Name: name, Url: url, Labels: labels, CreatedAt: time.Now().Unix()})
 			if err != nil {
 				errorHandler(w, r, http.StatusInternalServerError, err)
 				return
 			}
 
-			temp := template.Must(template.ParseFiles("./templates/link.html"))
-			temp.Execute(w, newLink)
+			tmpl := template.Must(template.ParseFiles("./templates/link.html"))
+			tmpl.ExecuteTemplate(w, "link", newLink)
 		}
 	}
 }
 
 var editHandler = func(w http.ResponseWriter, r *http.Request) {
-	linkIdStr := r.URL.Query().Get("id")
-	linkId, err := strconv.Atoi(linkIdStr)
+	//linkIdStr := r.URL.Query().Get("id")
+	//linkId, err := strconv.Atoi(linkIdStr)
 	if err != nil {
 		errorHandler(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	switch r.Method {
-	case "GET":
-		linkToEdit, err := db.One(linkId)
-		if err != nil {
-			errorHandler(w, r, http.StatusInternalServerError, err)
-			return
-		}
+	// case "GET":
+	// 	linkToEdit, err := db.One(linkId)
+	// 	if err != nil {
+	// 		errorHandler(w, r, http.StatusInternalServerError, err)
+	// 		return
+	// 	}
 
-		temp := template.Must(template.ParseFiles("./templates/edit.html"))
-		temp.Execute(w, linkToEdit)
+	// 	tmpl := template.Must(template.ParseFiles("./templates/edit.html"))
+	// 	tmpl.Execute(w, linkToEdit)
 	case "PUT":
 		name := r.PostFormValue("name")
 		url := r.PostFormValue("url")
 
 		link := &linkzapp.Link{
-			Id:   linkId,
+			//Id:   linkId,
 			Name: name,
 			Url:  url,
 		}
@@ -119,12 +120,10 @@ var editHandler = func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		temp := template.Must(template.ParseFiles("./templates/link.html"))
-		temp.Execute(w, updatedLink)
+		tmpl := template.Must(template.ParseFiles("./templates/link.html"))
+		tmpl.Execute(w, updatedLink)
 	}
 }
-
-//var labelCount = 0
 
 var labelHandler = func(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("new-label")
@@ -137,8 +136,8 @@ var labelHandler = func(w http.ResponseWriter, r *http.Request) {
 
 	data := map[string]string{"name": name, "id": id}
 
-	temp := template.Must(template.ParseFiles("./templates/label.html"))
-	temp.Execute(w, data)
+	tmpl := template.Must(template.ParseFiles("./templates/label.html"))
+	tmpl.Execute(w, data)
 }
 
 var deleteHandler = func(w http.ResponseWriter, r *http.Request) {
@@ -154,5 +153,4 @@ var deleteHandler = func(w http.ResponseWriter, r *http.Request) {
 		errorHandler(w, r, http.StatusInternalServerError, err)
 		return
 	}
-
 }

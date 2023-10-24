@@ -1,14 +1,16 @@
 package linkzapp
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
 type Label struct {
-	Id   int
-	Name string
+	Id   int    `bson:"id,omitempty"`
+	Name string `bson:"name,omitempty"`
 }
 
 type Link struct {
-	Id           int
-	Name         string
-	Url          string
-	Labels       []Label
-	Created_date string
+	Id        primitive.ObjectID `bson:"_id,omitempty"`
+	Name      string             `bson:"name,omitempty"`
+	Url       string             `bson:"url,omitempty"`
+	Labels    []Label            `bson:"labels,omitempty"`
+	CreatedAt int64              `createdat:"createdat,omitempty`
 }

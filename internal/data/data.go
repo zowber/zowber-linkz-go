@@ -7,6 +7,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,7 +30,6 @@ type MongoDBClient struct {
 }
 
 func NewPortfolioDbClient() (*MongoDBClient, error) {
-
 	connectionStr := DotEnv("DB_URI")
 	dbName := "links"
 	collectionName := "links"
@@ -45,7 +45,6 @@ func NewPortfolioDbClient() (*MongoDBClient, error) {
 	client, err := mongo.Connect(ctx, clientOpts)
 	if err != nil {
 		log.Print(err)
-		// TODO: Recover from this error
 		panic(err)
 	}
 
@@ -58,10 +57,9 @@ func (m *MongoDBClient) All() ([]*linkzapp.Link, error) {
 	ctx := context.Background()
 	filter := bson.M{}
 	opts := options.Find()
-	opts.SetSort(bson.M{"id": -1})
+	opts.SetSort(bson.M{"createdat": -1})
 
 	var links []*linkzapp.Link
-
 	cursor, err := m.collection.Find(ctx, filter, opts)
 	if err != nil {
 		return links, err
@@ -74,13 +72,12 @@ func (m *MongoDBClient) All() ([]*linkzapp.Link, error) {
 	return links, nil
 }
 
-func (m *MongoDBClient) One(linkId int) (*linkzapp.Link, error) {
+func (m *MongoDBClient) One(linkId primitive.ObjectID) (*linkzapp.Link, error) {
 	ctx := context.Background()
-	filter := bson.M{"id": linkId}
+	filter := bson.M{"_id": linkId}
 	opts := options.FindOne()
 
 	var link *linkzapp.Link
-
 	err := m.collection.FindOne(ctx, filter, opts).Decode(&link)
 	if err != nil {
 		return &linkzapp.Link{}, err
@@ -90,7 +87,6 @@ func (m *MongoDBClient) One(linkId int) (*linkzapp.Link, error) {
 }
 
 func (m *MongoDBClient) Insert(link *linkzapp.Link) (*linkzapp.Link, error) {
-
 	ctx := context.Background()
 	opts := options.InsertOne()
 
@@ -99,10 +95,12 @@ func (m *MongoDBClient) Insert(link *linkzapp.Link) (*linkzapp.Link, error) {
 		return &linkzapp.Link{}, err
 	}
 
-	// ID of inserted doc
-	log.Println("Insert successful", result.InsertedID.(primitive.ObjectID))
+	newLink, err := m.One(result.InsertedID.(primitive.ObjectID))
+	if err != nil {
+		return &linkzapp.Link{}, err
+	}
 
-	return link, nil
+	return newLink, nil
 }
 
 func (m *MongoDBClient) Update(link *linkzapp.Link) (*linkzapp.Link, error) {
