@@ -3,16 +3,24 @@ package routes
 import (
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/zowber/zowber-linkz-go/internal/data"
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var db, err = data.NewPortfolioDbClient()
+
+func oidToStr(oid primitive.ObjectID) string {
+	return oid.Hex()
+}
+
+var funcMap = template.FuncMap{
+	"oidToStr": oidToStr,
+}
 
 func NewRouter() http.Handler {
 	mux := http.NewServeMux()
@@ -49,7 +57,7 @@ var indexHandler = func(w http.ResponseWriter, r *http.Request) {
 		log.Print(err.Error())
 	}
 
-	tmpl := template.Must(template.ParseFiles("./templates/index.html", "./templates/header.html", "./templates/create-placeholder.html", "./templates/links.html", "./templates/link.html", "./templates/footer.html"))
+	tmpl := template.Must(template.New("index.html").Funcs(funcMap).ParseFiles("./templates/index.html", "./templates/header.html", "./templates/create-placeholder.html", "./templates/links.html", "./templates/link.html", "./templates/footer.html"))
 	tmpl.Execute(w, links)
 }
 
@@ -81,7 +89,7 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			tmpl := template.Must(template.ParseFiles("./templates/link.html"))
+			tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
 			tmpl.ExecuteTemplate(w, "link", newLink)
 		}
 	}
@@ -141,14 +149,14 @@ var labelHandler = func(w http.ResponseWriter, r *http.Request) {
 }
 
 var deleteHandler = func(w http.ResponseWriter, r *http.Request) {
-	linkIdStr := r.URL.Query().Get("id")
-	linkId, err := strconv.Atoi(linkIdStr)
+	oidStr := r.URL.Query().Get("id")
+	oid, err := primitive.ObjectIDFromHex(oidStr)
 	if err != nil {
 		errorHandler(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	err = db.Delete(linkId)
+	err = db.Delete(oid)
 	if err != nil {
 		errorHandler(w, r, http.StatusInternalServerError, err)
 		return

@@ -1,8 +1,8 @@
 {{define "link"}}
-<div class="list-group-item list-group-item-action" id="link-{{ .Id }}">
+<div class="list-group-item list-group-item-action" id="link-{{ oidToStr .Id }}">
   <div class="d-flex w-100 justify-content-between">
     <div>
-      <h5 class="mb-1"><a href="{{ .Url }}">{{ .Name }} - {{ .Id }}</a></h5>
+      <h5 class="mb-1"><a href="{{ .Url }}">{{ .Name }}</a></h5>
       <p class="mb-1">{{ range .Labels }}{{ .Name }} {{ end }}</p>
       <small>{{ .Url }}</small>
     </div>
@@ -10,15 +10,15 @@
       <div>
         <button
           class="btn btn-primary"
-          hx-get="/link/edit?id={{ .Id }}"
-          hx-target="#link-{{ .Id }}"
+          hx-get="/link/edit?id={{ oidToStr .Id }}"
+          hx-target="#link-{{ oidToStr .Id }}"
         >
           Edit
         </button>
         <button
           class="btn btn-danger ms-2"
-          hx-delete="/link/delete?id={{ .Id }}"
-          hx-target="#link-{{ .Id }}"
+          hx-delete="/link/delete?id={{ oidToStr .Id }}"
+          hx-target="#link-{{ oidToStr .Id }}"
           hx-swap="outerHTML"
         >
           Delete

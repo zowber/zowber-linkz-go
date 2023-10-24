@@ -120,9 +120,9 @@ func (m *MongoDBClient) Update(link *linkzapp.Link) (*linkzapp.Link, error) {
 	return link, nil
 }
 
-func (m *MongoDBClient) Delete(linkId int) error {
+func (m *MongoDBClient) Delete(oid primitive.ObjectID) error {
 	ctx := context.Background()
-	filter := bson.M{"id": linkId}
+	filter := bson.M{"_id": oid}
 	opts := options.FindOneAndDelete()
 
 	var deletedLink *linkzapp.Link
