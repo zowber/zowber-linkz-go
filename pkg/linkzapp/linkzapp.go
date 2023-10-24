@@ -12,5 +12,5 @@ type Link struct {
 	Name      string             `bson:"name,omitempty"`
 	Url       string             `bson:"url,omitempty"`
 	Labels    []Label            `bson:"labels"`
-	CreatedAt int64              `createdat:"createdat,omitempty`
+	CreatedAt int64              `bson:"createdat,omitempty"`
 }
