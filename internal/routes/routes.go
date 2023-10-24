@@ -17,6 +17,7 @@ func NewRouter() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", indexHandler)
+	mux.HandleFunc("/link/create-placeholder", createPlaceholderHandler)
 	mux.HandleFunc("/link/new", createHandler)
 	mux.HandleFunc("/link/label/new", labelHandler)
 	mux.HandleFunc("/link/edit", editHandler)
@@ -31,6 +32,11 @@ var errorHandler = func(w http.ResponseWriter, r *http.Request, statusCode int, 
 	temp.Execute(w, err)
 }
 
+var createPlaceholderHandler = func(w http.ResponseWriter, r *http.Request) {
+	temp := template.Must(template.ParseFiles("./templates/create-placeholder.html"))
+	temp.ExecuteTemplate(w, "create-placeholder", nil)
+}
+
 var indexHandler = func(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		errorHandler(w, r, http.StatusNotFound, err)
@@ -42,7 +48,7 @@ var indexHandler = func(w http.ResponseWriter, r *http.Request) {
 		log.Print(err.Error())
 	}
 
-	temp := template.Must(template.ParseFiles("./templates/index.html"))
+	temp := template.Must(template.ParseFiles("./templates/index.html", "./templates/header.html", "./templates/create-placeholder.html", "./templates/links.html", "./templates/footer.html"))
 	temp.Execute(w, links)
 }
 
@@ -63,7 +69,7 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 			formRaw := r.Form
 			var labels []linkzapp.Label
 			for key, value := range formRaw {
-				if strings.Contains(key, "label") {
+				if strings.Contains(key, "label-") {
 					labels = append(labels, linkzapp.Label{Id: len(labels), Name: value[0]})
 				}
 			}
