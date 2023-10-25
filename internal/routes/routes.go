@@ -26,6 +26,7 @@ func NewRouter() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", indexHandler)
+	mux.HandleFunc("/link", linkHandler)
 	mux.HandleFunc("/link/create-placeholder", createPlaceholderHandler)
 	mux.HandleFunc("/link/new", createHandler)
 	mux.HandleFunc("/link/label/new", labelHandler)
@@ -95,30 +96,49 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+var linkHandler = func(w http.ResponseWriter, r *http.Request) {
+	// oidStr := r.URL.Path[len("/link/"):]
+	oidStr := r.URL.Query().Get("id")
+	oid, err := primitive.ObjectIDFromHex(oidStr)
+	if err != nil {
+		errorHandler(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	link, err := db.One(oid)
+	if err != nil {
+		errorHandler(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
+	tmpl.ExecuteTemplate(w, "link", link)
+}
+
 var editHandler = func(w http.ResponseWriter, r *http.Request) {
-	//linkIdStr := r.URL.Query().Get("id")
-	//linkId, err := strconv.Atoi(linkIdStr)
+	oidStr := r.URL.Query().Get("id")
+	oid, err := primitive.ObjectIDFromHex(oidStr)
 	if err != nil {
 		errorHandler(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	switch r.Method {
-	// case "GET":
-	// 	linkToEdit, err := db.One(linkId)
-	// 	if err != nil {
-	// 		errorHandler(w, r, http.StatusInternalServerError, err)
-	// 		return
-	// 	}
+	case "GET":
+		linkToEdit, err := db.One(oid)
+		if err != nil {
+			errorHandler(w, r, http.StatusInternalServerError, err)
+			return
+		}
 
-	// 	tmpl := template.Must(template.ParseFiles("./templates/edit.html"))
-	// 	tmpl.Execute(w, linkToEdit)
+		tmpl := template.Must(template.New("edit.html").Funcs(funcMap).ParseFiles("./templates/edit.html"))
+		tmpl.Execute(w, linkToEdit)
 	case "PUT":
 		name := r.PostFormValue("name")
 		url := r.PostFormValue("url")
 
 		link := &linkzapp.Link{
-			//Id:   linkId,
+			Id:   oid,
 			Name: name,
 			Url:  url,
 		}
@@ -128,7 +148,7 @@ var editHandler = func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		tmpl := template.Must(template.ParseFiles("./templates/link.html"))
+		tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
 		tmpl.Execute(w, updatedLink)
 	}
 }

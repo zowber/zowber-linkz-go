@@ -12,6 +12,7 @@
           class="btn btn-primary"
           hx-get="/link/edit?id={{ oidToStr .Id }}"
           hx-target="#link-{{ oidToStr .Id }}"
+          hx-swap="outerHTML"
         >
           Edit
         </button>

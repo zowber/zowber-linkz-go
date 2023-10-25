@@ -11,6 +11,6 @@ type Link struct {
 	Id        primitive.ObjectID `bson:"_id,omitempty"`
 	Name      string             `bson:"name,omitempty"`
 	Url       string             `bson:"url,omitempty"`
-	Labels    []Label            `bson:"labels"`
+	Labels    []Label            `bson:"labels,omitempty"`
 	CreatedAt int64              `bson:"createdat,omitempty"`
 }

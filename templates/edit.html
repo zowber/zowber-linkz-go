@@ -1,6 +1,8 @@
 <form
-  hx-put="/link/edit?id={{ .Id }}"
-  hx-target="#link-{{ .Id }}"
+  hx-put="/link/edit?id={{ oidToStr .Id }}"
+  hx-post="/link/new"
+  hx-params="not new-label"
+  hx-target="#link-{{ oidToStr .Id }}"
   hx-swap="outerHTML"
 >
   <div class="row mb-3">
@@ -31,5 +33,12 @@
     </div>
   </div>
   <button type="submit" class="btn btn-primary">Save</button>
-  <button class="btn btn-outline-primary">Cancel</button>
+  <button
+    class="btn btn-outline-primary"
+    hx-get="/link?id={{ oidToStr .Id }}"
+    hx-target="#link-{{ oidToStr .Id }}"
+    hx-swap="outerHTML"
+  >
+    Cancel
+  </button>
 </form>
