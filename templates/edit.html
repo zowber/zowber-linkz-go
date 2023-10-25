@@ -1,6 +1,5 @@
 <form
   hx-put="/link/edit?id={{ oidToStr .Id }}"
-  hx-post="/link/new"
   hx-params="not new-label"
   hx-target="#link-{{ oidToStr .Id }}"
   hx-swap="outerHTML"
@@ -8,37 +7,62 @@
   <div class="row mb-3">
     <label for="name" class="col-sm-2 col-form-label">Name</label>
     <div class="col-sm-10">
-      <input type="text" class="form-control" name="name" value="{{ .Name }}" />
+      <input
+        type="text"
+        class="form-control"
+        name="name"
+        value="{{ .Name }}"
+        required
+      />
     </div>
   </div>
   <div class="row mb-3">
     <label for="url" class="col-sm-2 col-form-label">Url</label>
     <div class="col-sm-10">
-      <input type="url" class="form-control" name="url" value="{{ .Url }}" />
+      <input
+        type="url"
+        class="form-control"
+        name="url"
+        value="{{ .Url }}"
+        required
+      />
     </div>
   </div>
   <div class="row mb-3">
     <label for="label" class="col-sm-2 col-form-label">Label</label>
     <div class="col-sm-10">
-      <div class="input-group mb-3">
-        <input type="text" class="form-control" name="label" />
-        <button
-          class="btn btn-outline-secondary"
-          type="button"
-          id="button-addon2"
-        >
-          Add
-        </button>
+      <div class="input-group mb-0">
+        <input
+          type="text"
+          class="form-control"
+          name="new-label"
+          hx-post="/link/label/new"
+          hx-params="new-label"
+          hx-target="#labels-{{ oidToStr .Id }}"
+          hx-swap="afterbegin"
+          hx-trigger="click from:#add-new-label"
+          hx-on::after-request="this.value=''"
+        />
+        <a class="btn btn-outline-secondary" id="add-new-label">Add</a>
       </div>
     </div>
   </div>
-  <button type="submit" class="btn btn-primary">Save</button>
-  <button
-    class="btn btn-outline-primary"
-    hx-get="/link?id={{ oidToStr .Id }}"
-    hx-target="#link-{{ oidToStr .Id }}"
-    hx-swap="outerHTML"
-  >
-    Cancel
-  </button>
+  <div id="labels-{{ oidToStr .Id }}">
+    {{ range .Labels }}
+    <span class="badge bg-primary me-1">{{ .Name }}</span>
+    {{ end }}
+  </div>
+  <div class="row mb-3">
+    <div class="col-sm-10 offset-sm-2">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <button
+        class="btn btn-outline-primary"
+        hx-get="/link?id={{ oidToStr .Id }}"
+        hx-target="#link-{{ oidToStr .Id }}"
+        hx-swap="outerHTML"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
 </form>
