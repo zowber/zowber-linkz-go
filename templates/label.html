@@ -1,13 +1,16 @@
+{{define "label"}}
 <div class="row">
-  <div class="col-3 offset-2">
-    <div class="input-group mb-3">
-      <input
-        type="text"
-        class="form-control"
-        value="{{ .name }}"
-        name="{{ .id }}"
-        id="{{ .id }}" />
-      <button class="btn btn-outline-danger" type="button">Remove</button>
-    </div>
+  <div class="col-4 offset-2">
+	<div class="input-group mb-3">
+	  <input
+		type="text"
+		class="form-control"
+		value="{{ .Name }}"
+		name="{{ .Id }}"
+		id="{{ .Id }}"
+	  />
+	  <button class="btn btn-outline-danger" type="button">Remove</button>
+	</div>
   </div>
 </div>
+{{ end }}

@@ -80,7 +80,7 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 			var labels []linkzapp.Label
 			for key, value := range formRaw {
 				if strings.Contains(key, "label_") {
-					labels = append(labels, linkzapp.Label{Id: len(labels), Name: value[0]})
+					labels = append(labels, linkzapp.Label{Id: key, Name: value[0]})
 				}
 			}
 
@@ -131,16 +131,26 @@ var editHandler = func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		tmpl := template.Must(template.New("edit.html").Funcs(funcMap).ParseFiles("./templates/edit.html"))
+		tmpl := template.Must(template.New("edit.html").Funcs(funcMap).ParseFiles("./templates/edit.html", "./templates/label.html"))
 		tmpl.Execute(w, linkToEdit)
 	case "PUT":
 		name := r.PostFormValue("name")
 		url := r.PostFormValue("url")
 
+		// this seems a bit nasty
+		formRaw := r.Form
+		var labels []linkzapp.Label
+		for key, value := range formRaw {
+			if strings.Contains(key, "label_") {
+				labels = append(labels, linkzapp.Label{Id: key, Name: value[0]})
+			}
+		}
+
 		link := &linkzapp.Link{
-			Id:   oid,
-			Name: name,
-			Url:  url,
+			Id:     oid,
+			Name:   name,
+			Url:    url,
+			Labels: labels,
 		}
 		updatedLink, err := db.Update(link)
 		if err != nil {
@@ -149,23 +159,25 @@ var editHandler = func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
-		tmpl.Execute(w, updatedLink)
+		tmpl.ExecuteTemplate(w, "link", updatedLink)
 	}
 }
 
 var labelHandler = func(w http.ResponseWriter, r *http.Request) {
-	name := r.PostFormValue("new-label")
-	rawId := strings.Split(name, " ")
+	switch r.Method {
+	case "POST":
+		name := r.PostFormValue("new-label")
+		rawId := strings.Split(name, " ")
 
-	var id = "label"
-	for i := 0; i < len(rawId); i++ {
-		id = id + "_" + rawId[i]
+		id := "label_"
+		for i := 0; i < len(rawId); i++ {
+			id = id + rawId[i]
+		}
+
+		data := map[string]string{"Name": name, "Id": id}
+		tmpl := template.Must(template.New("label.html").ParseFiles("./templates/label.html"))
+		tmpl.ExecuteTemplate(w, "label", data)
 	}
-
-	data := map[string]string{"name": name, "id": id}
-
-	tmpl := template.Must(template.ParseFiles("./templates/label.html"))
-	tmpl.Execute(w, data)
 }
 
 var deleteHandler = func(w http.ResponseWriter, r *http.Request) {

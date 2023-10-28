@@ -3,7 +3,7 @@ package linkzapp
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Label struct {
-	Id   int    `bson:"id,omitempty"`
+	Id   string `bson:"id,omitempty"`
 	Name string `bson:"name,omitempty"`
 }
 

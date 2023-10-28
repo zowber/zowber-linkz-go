@@ -105,19 +105,18 @@ func (m *MongoDBClient) Insert(link *linkzapp.Link) (*linkzapp.Link, error) {
 
 func (m *MongoDBClient) Update(link *linkzapp.Link) (*linkzapp.Link, error) {
 	ctx := context.Background()
-	filter := bson.M{"id": link.Id}
-	update := bson.M{"$set": bson.M{"name": link.Name, "url": link.Url}}
-	// specify that the modified document should be returned
-	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	filter := bson.M{"_id": link.Id}
+	replace := bson.M{"name": link.Name, "url": link.Url, "labels": link.Labels}
+	opts := options.FindOneAndReplace().SetReturnDocument(options.After)
 
 	var updatedLink *linkzapp.Link
 
-	err := m.collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&updatedLink)
+	err := m.collection.FindOneAndReplace(ctx, filter, replace, opts).Decode(&updatedLink)
 	if err != nil {
 		return &linkzapp.Link{}, err
 	}
 
-	return link, nil
+	return updatedLink, nil
 }
 
 func (m *MongoDBClient) Delete(oid primitive.ObjectID) error {
