@@ -41,7 +41,7 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 		if err := rows.Scan(&Id, &Name, &Url, &Labels, &CreatedAt); err != nil {
 			log.Fatal(err)
 		}
-		link := &linkzapp.Link{&Id, Name, Url, Labels, CreatedAt}
+		link := &linkzapp.Link{Id: &Id, Name: Name, Url: Url, Labels: Labels, CreatedAt: CreatedAt}
 		links = append(links, link)
 	}
 
