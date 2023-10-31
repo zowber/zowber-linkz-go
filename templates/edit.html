@@ -1,8 +1,8 @@
 <form
   class="mt-3"
-  hx-put="/link/edit?id={{ oidToStr .Id }}"
+  hx-put="/link/edit?id={{ idToStr .Id }}"
   hx-params="not new-label"
-  hx-target="#link-{{ oidToStr .Id }}"
+  hx-target="#link-{{ idToStr .Id }}"
   hx-swap="outerHTML"
 >
   <div class="row mb-3">
@@ -39,7 +39,7 @@
           name="new-label"
           hx-post="/link/label/new"
           hx-params="new-label"
-          hx-target="#labels-{{ oidToStr .Id }}"
+          hx-target="#labels-{{ idToStr .Id }}"
           hx-swap="afterbegin"
           hx-trigger="click from:#add-new-label"
           hx-on::after-request="this.value=''"
@@ -49,7 +49,7 @@
     </div>
   </div>
 
-  <div id="labels-{{ oidToStr .Id }}">
+  <div id="labels-{{ idToStr .Id }}">
     {{ if .Labels }} {{ range .Labels }} {{ template "label" . }} {{ end }}{{
     end }}
   </div>
@@ -59,8 +59,8 @@
       <button type="submit" class="btn btn-primary me-2">Save</button>
       <button
         class="btn btn-outline-primary"
-        hx-get="/link?id={{ oidToStr .Id }}"
-        hx-target="#link-{{ oidToStr .Id }}"
+        hx-get="/link?id={{ idToStr .Id }}"
+        hx-target="#link-{{ idToStr .Id }}"
         hx-swap="outerHTML"
       >
         Cancel
