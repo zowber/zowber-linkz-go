@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	log.Println("Sup!\n")
+	log.Println("Sup!")
 	router := routes.NewRouter()
 	err := http.ListenAndServe(":9000", router)
 	if err != nil {
