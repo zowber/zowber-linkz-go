@@ -63,7 +63,6 @@ var indexHandler = func(w http.ResponseWriter, r *http.Request) {
 }
 
 var createHandler = func(w http.ResponseWriter, r *http.Request) {
-
 	switch r.Method {
 	case "GET":
 		{
@@ -84,7 +83,14 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 			// 	}
 			// }
 
-			newLink, err := db.Insert(&linkzapp.Link{Name: name, Url: url, CreatedAt: int(time.Now().Unix())})
+			link := &linkzapp.Link{
+				Name: name,
+				Url:  url,
+				// Labels: labels,
+				CreatedAt: int(time.Now().Unix()),
+			}
+
+			newLink, err := db.Insert(link)
 			if err != nil {
 				errorHandler(w, r, http.StatusInternalServerError, err)
 				return
