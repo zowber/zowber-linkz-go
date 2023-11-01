@@ -1,6 +1,8 @@
 .air*
 .env
 
+*.sqlite
+
 bin/
 tmp/
 vendor/
