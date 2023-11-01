@@ -10,7 +10,7 @@ import (
 )
 
 type SQLiteClient struct {
-	db *sql.DB
+	client *sql.DB
 }
 
 func NewDbClient() (*SQLiteClient, error) {
@@ -23,10 +23,12 @@ func NewDbClient() (*SQLiteClient, error) {
 }
 
 func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
-	db, err := sql.Open("sqlite3", "links.sqlite")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// db, err := sql.Open("sqlite3", "links.sqlite")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	db := d.client
 
 	rows, err := db.Query("SELECT Id, Name, Url, Labels, CreatedAt FROM links")
 	if err != nil {
@@ -50,12 +52,14 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 
 // One
 func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
-	db, err := sql.Open("sqlite3", "links.sqlite")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// db, err := sql.Open("sqlite3", "links.sqlite")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	_, err = db.Exec("DELETE from links WHERE id = " + strconv.Itoa(id))
+	db := d.client
+
+	_, err := db.Exec("DELETE from links WHERE id = " + strconv.Itoa(id))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,10 +69,12 @@ func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
 
 // Insert
 func (d *SQLiteClient) Insert(link *linkzapp.Link) (*linkzapp.Link, error) {
-	db, err := sql.Open("sqlite3", "links.sqlite")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// db, err := sql.Open("sqlite3", "links.sqlite")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	db := d.client
 
 	res, err := db.Exec("INSERT INTO links (Name, Url, Labels, CreatedAt) VALUES ( ?, ?, ?, ? )",
 		link.Name, link.Url, link.Labels, link.CreatedAt)
@@ -95,12 +101,14 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (*linkzapp.Link, error) {
 
 // Update
 func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, error) {
-	db, err := sql.Open("sqlite3", "links.sqlite")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// db, err := sql.Open("sqlite3", "links.sqlite")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	_, err = db.Exec("UPDATE links SET Name = ?, Url = ?, Labels = ?, CreatedAt = ? WHERE Id = ?",
+	db := d.client
+
+	_, err := db.Exec("UPDATE links SET Name = ?, Url = ?, Labels = ?, CreatedAt = ? WHERE Id = ?",
 		link.Name, link.Url, link.Labels, link.CreatedAt, link.Id)
 	if err != nil {
 		log.Fatal(err)
@@ -111,12 +119,14 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 
 // Delete
 func (d *SQLiteClient) Delete(id int) error {
-	db, err := sql.Open("sqlite3", "links.sqlite")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// db, err := sql.Open("sqlite3", "links.sqlite")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	_, err = db.Exec("DELETE from links WHERE id = " + strconv.Itoa(id))
+	db := d.client
+
+	_, err := db.Exec("DELETE from links WHERE id = " + strconv.Itoa(id))
 	if err != nil {
 		log.Fatal(err)
 	}
