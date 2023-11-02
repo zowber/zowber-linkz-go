@@ -9,6 +9,33 @@ import (
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
 )
 
+// CREATE TABLE links (
+//     id INTEGER PRIMARY KEY,
+//     name TEXT,
+//     url TEXT,
+//     created_at INTEGER
+// );
+
+// CREATE TABLE labels (
+//     id INTEGER PRIMARY KEY,
+//     name TEXT
+// )
+
+// CREATE TABLE link_labels (
+//     link_id INTEGER,
+//     label_id INTEGER,
+//     FOREIGN KEY (link_id) REFERENCES links (id),
+//     FOREIGN KEY (label_id) REFERENCES labels (id),
+//     PRIMARY KEY (link_id, label_id)
+// );
+
+// SELECT links.id, links.name AS link_name, links.url, links.created_at, GROUP_CONCAT(labels.name) AS label_names
+// FROM links
+// LEFT JOIN link_labels ON links.id = link_labels.link_id
+// LEFT JOIN labels ON link_labels.label_id = labels.id
+// WHERE links.id = :link_id
+// GROUP BY links.id;
+
 type SQLiteClient struct {
 	client *sql.DB
 }
@@ -23,25 +50,20 @@ func NewDbClient() (*SQLiteClient, error) {
 }
 
 func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
-	// db, err := sql.Open("sqlite3", "links.sqlite")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	db := d.client
 
 	rows, err := db.Query("SELECT Id, Name, Url, Labels, CreatedAt FROM links")
 	if err != nil {
 		log.Println(err)
 	}
-	defer rows.Close()
 
 	var links []*linkzapp.Link
 	for rows.Next() {
 		var Id, CreatedAt int
-		var Name, Url, Labels string
+		var Name, Url string
+		var Labels []linkzapp.Label
 		if err := rows.Scan(&Id, &Name, &Url, &Labels, &CreatedAt); err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 		link := &linkzapp.Link{Id: &Id, Name: Name, Url: Url, Labels: Labels, CreatedAt: CreatedAt}
 		links = append(links, link)
@@ -50,36 +72,29 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 	return links, nil
 }
 
-// One
 func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
-	// db, err := sql.Open("sqlite3", "links.sqlite")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	db := d.client
 
-	_, err := db.Exec("DELETE from links WHERE id = " + strconv.Itoa(id))
-	if err != nil {
-		log.Fatal(err)
-	}
+	row := db.QueryRow("SELECT * from links WHERE id = " + strconv.Itoa(id) + " LIMIT 1")
 
-	return nil, nil
+	var Id, CreatedAt int
+	var Name, Url string
+	var Labels []linkzapp.Label
+	if err := row.Scan(&Id, &Name, &Url, &Labels, &CreatedAt); err != nil {
+		log.Println(err)
+	}
+	link := &linkzapp.Link{Id: &Id, Name: Name, Url: Url, Labels: Labels, CreatedAt: CreatedAt}
+
+	return link, nil
 }
 
-// Insert
 func (d *SQLiteClient) Insert(link *linkzapp.Link) (*linkzapp.Link, error) {
-	// db, err := sql.Open("sqlite3", "links.sqlite")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	db := d.client
 
 	res, err := db.Exec("INSERT INTO links (Name, Url, Labels, CreatedAt) VALUES ( ?, ?, ?, ? )",
 		link.Name, link.Url, link.Labels, link.CreatedAt)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	newId, err := res.LastInsertId()
@@ -99,36 +114,24 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (*linkzapp.Link, error) {
 	return insertedLink, err
 }
 
-// Update
 func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, error) {
-	// db, err := sql.Open("sqlite3", "links.sqlite")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	db := d.client
 
 	_, err := db.Exec("UPDATE links SET Name = ?, Url = ?, Labels = ?, CreatedAt = ? WHERE Id = ?",
 		link.Name, link.Url, link.Labels, link.CreatedAt, link.Id)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	return nil, nil
 }
 
-// Delete
 func (d *SQLiteClient) Delete(id int) error {
-	// db, err := sql.Open("sqlite3", "links.sqlite")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	db := d.client
 
 	_, err := db.Exec("DELETE from links WHERE id = " + strconv.Itoa(id))
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	return err
