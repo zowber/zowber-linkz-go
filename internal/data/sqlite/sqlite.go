@@ -10,7 +10,7 @@ import (
 )
 
 // CREATE TABLE links (
-//     id INTEGER PRIMARY KEY,
+//     id INTEGER PRIMARY KEY AUTOINCREMENT,
 //     name TEXT,
 //     url TEXT,
 //     created_at INTEGER
@@ -19,7 +19,7 @@ import (
 // CREATE TABLE labels (
 //     id INTEGER PRIMARY KEY,
 //     name TEXT
-// )
+// );
 
 // CREATE TABLE link_labels (
 //     link_id INTEGER,
@@ -29,12 +29,20 @@ import (
 //     PRIMARY KEY (link_id, label_id)
 // );
 
+// get
 // SELECT links.id, links.name AS link_name, links.url, links.created_at, GROUP_CONCAT(labels.name) AS label_names
 // FROM links
 // LEFT JOIN link_labels ON links.id = link_labels.link_id
 // LEFT JOIN labels ON link_labels.label_id = labels.id
 // WHERE links.id = :link_id
 // GROUP BY links.id;
+
+// insert one
+// INSERT INTO links (name, url, created_at) VALUES ('LinkName', 'LinkURL', 'CreatedAtTimestamp');
+// SELECT last_insert_rowid();
+// INSERT INTO link_labels (link_id, label_id) VALUES (X, A);
+// INSERT INTO link_labels (link_id, label_id) VALUES (X, B);
+// INSERT INTO link_labels (link_id, label_id) VALUES (X, C);
 
 type SQLiteClient struct {
 	client *sql.DB
