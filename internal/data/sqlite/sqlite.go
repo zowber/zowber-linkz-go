@@ -9,71 +9,78 @@ import (
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
 )
 
-// CREATE TABLE links (
-//     id INTEGER PRIMARY KEY AUTOINCREMENT,
-//     name TEXT,
-//     url TEXT,
-//     created_at INTEGER
+// CREATE TABLE "links" (
+// 	"id"	INTEGER NOT NULL,
+// 	"name"	TEXT NOT NULL,
+// 	"url"	TEXT NOT NULL,
+// 	PRIMARY KEY("id" AUTOINCREMENT)
 // );
 
-// CREATE TABLE labels (
-//     id INTEGER PRIMARY KEY,
-//     name TEXT
+// CREATE TABLE "labels" (
+// 	"id"	INTEGER NOT NULL,
+// 	"name"	TEXT NOT NULL,
+// 	PRIMARY KEY("id" AUTOINCREMENT)
 // );
 
-// CREATE TABLE link_labels (
-//     link_id INTEGER,
-//     label_id INTEGER,
-//     FOREIGN KEY (link_id) REFERENCES links (id),
-//     FOREIGN KEY (label_id) REFERENCES labels (id),
-//     PRIMARY KEY (link_id, label_id)
+// CREATE TABLE "link_labels" (
+// 	"link_id"	INTEGER NOT NULL,
+// 	"label_id"	INTEGER NOT NULL,
+// 	FOREIGN KEY("link_id") REFERENCES "links"("id"),
+// 	FOREIGN KEY("label_id") REFERENCES "labels"("id"),
+// 	PRIMARY KEY("link_id","label_id")
 // );
-
-// get
-// SELECT links.id, links.name AS link_name, links.url, links.created_at, GROUP_CONCAT(labels.name) AS label_names
-// FROM links
-// LEFT JOIN link_labels ON links.id = link_labels.link_id
-// LEFT JOIN labels ON link_labels.label_id = labels.id
-// WHERE links.id = :link_id
-// GROUP BY links.id;
-
-// insert one
-// INSERT INTO links (name, url, created_at) VALUES ('LinkName', 'LinkURL', 'CreatedAtTimestamp');
-// SELECT last_insert_rowid();
-// INSERT INTO link_labels (link_id, label_id) VALUES (X, A);
-// INSERT INTO link_labels (link_id, label_id) VALUES (X, B);
-// INSERT INTO link_labels (link_id, label_id) VALUES (X, C);
 
 type SQLiteClient struct {
 	client *sql.DB
 }
 
 func NewDbClient() (*SQLiteClient, error) {
-	db, err := sql.Open("sqlite3", "links.sqlite")
+	db, err := sql.Open("sqlite3", "links2.sqlite")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
-
 	return &SQLiteClient{db}, nil
 }
 
 func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 	db := d.client
 
-	rows, err := db.Query("SELECT Id, Name, Url, Labels, CreatedAt FROM links")
+	rows, err := db.Query(`
+		SELECT * FROM links
+	`)
 	if err != nil {
 		log.Println(err)
 	}
 
 	var links []*linkzapp.Link
 	for rows.Next() {
-		var Id, CreatedAt int
-		var Name, Url string
-		var Labels []linkzapp.Label
-		if err := rows.Scan(&Id, &Name, &Url, &Labels, &CreatedAt); err != nil {
+		var id, createdAt int
+		var name, url string
+		if err := rows.Scan(&id, &name, &url); err != nil {
 			log.Println(err)
 		}
-		link := &linkzapp.Link{Id: &Id, Name: Name, Url: Url, Labels: Labels, CreatedAt: CreatedAt}
+
+		//get the labels
+		labels := []linkzapp.Label{}
+		labelRows, err := db.Query(`
+			SELECT labels.id, labels.name AS name
+			FROM labels
+			INNER JOIN link_labels ON labels.id = link_labels.label_id
+			WHERE link_labels.link_id = ?;
+		`, id)
+		if err != nil {
+			log.Println(err)
+		}
+		for labelRows.Next() {
+			var labelId int
+			var labelName string
+			if err := labelRows.Scan(&labelId, &labelName); err != nil {
+				log.Println("here", err)
+			}
+			label := &linkzapp.Label{Id: labelId, Name: labelName}
+			labels = append(labels, *label)
+		}
+		link := &linkzapp.Link{Id: &id, Name: name, Url: url, Labels: labels, CreatedAt: createdAt}
 		links = append(links, link)
 	}
 

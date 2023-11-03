@@ -80,7 +80,9 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 			var labels []linkzapp.Label
 			for key, value := range formRaw {
 				if strings.Contains(key, "label_") {
-					labels = append(labels, linkzapp.Label{Id: key, Name: value[0]})
+					keyToI, _ := strconv.Atoi(strings.SplitAfter(key, "_")[0])
+					log.Println("FYI: does this work?", keyToI)
+					labels = append(labels, linkzapp.Label{Id: keyToI, Name: value[0]})
 				}
 			}
 

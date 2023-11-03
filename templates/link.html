@@ -3,6 +3,7 @@
   <div class="d-flex w-100 justify-content-between">
     <div>
       <h5 class="mb-1"><a href="{{ .Url }}">{{ .Name }}</a></h5>
+      <p class="mb-1">{{ range .Labels }}<span class="badge bg-secondary me-2">{{ .Name }}</span>{{ end }}</p>
       <small>{{ .Url }}</small>
     </div>
     <div class="align-self-center">
