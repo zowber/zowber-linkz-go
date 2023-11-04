@@ -13,6 +13,7 @@ import (
 // 	"id"	INTEGER NOT NULL,
 // 	"name"	TEXT NOT NULL,
 // 	"url"	TEXT NOT NULL,
+// 	"createdat"	INTEGER NOT NULL,
 // 	PRIMARY KEY("id" AUTOINCREMENT)
 // );
 
@@ -56,7 +57,7 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 	for rows.Next() {
 		var id, createdAt int
 		var name, url string
-		if err := rows.Scan(&id, &name, &url); err != nil {
+		if err := rows.Scan(&id, &name, &url, &createdAt); err != nil {
 			log.Println(err)
 		}
 
@@ -90,7 +91,7 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
 	db := d.client
 
-	row := db.QueryRow("SELECT * from links WHERE id = " + strconv.Itoa(id) + " LIMIT 1")
+	row := db.QueryRow("SELECT * from links WHERE id = " + strconv.Itoa(id) + " LIMIT 1;")
 
 	var Id, CreatedAt int
 	var Name, Url string
@@ -106,11 +107,30 @@ func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
 func (d *SQLiteClient) Insert(link *linkzapp.Link) (*linkzapp.Link, error) {
 	db := d.client
 
-	res, err := db.Exec("INSERT INTO links (Name, Url, Labels, CreatedAt) VALUES ( ?, ?, ?, ? )",
-		link.Name, link.Url, link.Labels, link.CreatedAt)
+	// insert the link
+	res, err := db.Exec("INSERT INTO links (name, url, createdat) VALUES ( ?, ?, ? );",
+		link.Name, link.Url, link.CreatedAt)
 	if err != nil {
 		log.Println(err)
 	}
+
+	labelIDs := make([]int, len(link.Labels))
+	log.Println("labelIDs", labelIDs)
+
+	// insert the labels / insert the relations
+	for i, label := range link.Labels {
+		_, err := db.Exec(`
+			INSERT INTO labels (name)
+			VALUES (?)
+			SELECT last_insert_rowid();
+		`, label.Name).Scan(&labelIDs[i])
+		if err != nil {
+			log.Println(err)
+		}
+
+	}
+
+	// the relations
 
 	newId, err := res.LastInsertId()
 	if err != nil {
