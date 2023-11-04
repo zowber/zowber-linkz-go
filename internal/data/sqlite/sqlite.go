@@ -107,30 +107,45 @@ func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
 func (d *SQLiteClient) Insert(link *linkzapp.Link) (*linkzapp.Link, error) {
 	db := d.client
 
+    tx, err := db.Begin()
+    if err != nil {
+        log.Println(err)
+    }
+
 	// insert the link
-	res, err := db.Exec("INSERT INTO links (name, url, createdat) VALUES ( ?, ?, ? );",
-		link.Name, link.Url, link.CreatedAt)
+    var LinkId int 
+    err = tx.QueryRow(`
+        INSERT INTO links (name, url, createdat)
+        VALUES ( ?, ?, ? );
+        SELECT last_insert_rowid();
+        `, link.Name, link.Url, link.CreatedAt).Scan(&LinkId)
 	if err != nil {
-		log.Println(err)
+        log.Println("Err insering link:", err)
 	}
 
-	labelIDs := make([]int, len(link.Labels))
-	log.Println("labelIDs", labelIDs)
-
-	// insert the labels / insert the relations
+    // insert the label(s)
+	labelIds := make([]int, len(link.Labels))
 	for i, label := range link.Labels {
-		_, err := db.Exec(`
-			INSERT INTO labels (name)
-			VALUES (?)
+		err = tx.QueryRow(`
+            INSERT INTO labels (name)
+           	VALUES (?)
 			SELECT last_insert_rowid();
-		`, label.Name).Scan(&labelIDs[i])
+		`, label.Name).Scan(&labelIds[i])
 		if err != nil {
-			log.Println(err)
+            log.Println("Err inserting link labels:", err)
 		}
-
 	}
 
-	// the relations
+	// insert the relations
+    for _, labelId := range labelIds {
+        _, err = tx.Exec(`
+            INSERT INTO links_labels (link_id, label_id)
+            VALUES (?, ?)
+        `, link.Id, labelId)
+        if err != nil {
+            log.Println("Err inserting link-label relation:", err)}
+    }
+
 
 	newId, err := res.LastInsertId()
 	if err != nil {
