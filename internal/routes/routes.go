@@ -91,14 +91,21 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 				Labels:    labels,
 				CreatedAt: int(time.Now().Unix()),
 			}
-
-			newLink, err := db.Insert(link)
+            
+            log.Println("inserting", link) 
+			newLinkId, err := db.Insert(link)
 			if err != nil {
 				errorHandler(w, r, http.StatusInternalServerError, err)
 				return
 			}
+            log.Println("inserted. id", newLinkId)
 
-			tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
+            newLink, err := db.One(newLinkId)
+            if err != nil {
+                log.Println("Err getting inserted link", err)
+            }
+
+            tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
 			tmpl.ExecuteTemplate(w, "link", newLink)
 		}
 	}
