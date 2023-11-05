@@ -1,6 +1,9 @@
 .air*
 .env
 
+*.sqlite
+*.sqlite-journal
+
 bin/
 tmp/
 vendor/
