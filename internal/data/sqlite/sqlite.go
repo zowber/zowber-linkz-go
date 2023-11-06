@@ -158,7 +158,7 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
 		if err != nil {
 			log.Println("Err inserting link labels:", err)
 		}
-	}
+}
 
 	// insert the relations
 	for _, labelId := range labelIds {
@@ -181,7 +181,7 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
 
 func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, error) {
 	db := d.client
-
+  
     // 1. have labels changed?
     // 2. then delete or add labels
     // 3. has link changed?
@@ -210,7 +210,6 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 		label := &linkzapp.Label{Id: labelId, Name: labelName}
 		labels = append(labels, *label)
 	}
-
 
     _, err := db.Exec("UPDATE links SET Name = ?, Url = ?, Labels = ?, CreatedAt = ? WHERE Id = ?",
 		link.Name, link.Url, link.Labels, link.CreatedAt, link.Id)
