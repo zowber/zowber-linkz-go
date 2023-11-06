@@ -158,7 +158,7 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
 		if err != nil {
 			log.Println("Err inserting link labels:", err)
 		}
-}
+	}
 
 	// insert the relations
 	for _, labelId := range labelIds {
@@ -181,15 +181,15 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
 
 func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, error) {
 	db := d.client
-  
-    // 1. have labels changed?
-    // 2. then delete or add labels
-    // 3. has link changed?
-    // 4. then update link
-    // 5. update associations?
-	
-    // 1. get current labels
-    // get the labels
+
+	// 1. have labels changed?
+	// 2. then delete or add labels
+	// 3. has link changed?
+	// 4. then update link
+	// 5. update associations?
+
+	// 1. get current labels
+	// get the labels
 	labelRows, err := db.Query(`
 		SELECT labels.id, labels.name AS name
 		FROM labels
@@ -211,7 +211,7 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 		labels = append(labels, *label)
 	}
 
-    _, err := db.Exec("UPDATE links SET Name = ?, Url = ?, Labels = ?, CreatedAt = ? WHERE Id = ?",
+	_, err = db.Exec("UPDATE links SET Name = ?, Url = ?, Labels = ?, CreatedAt = ? WHERE Id = ?",
 		link.Name, link.Url, link.Labels, link.CreatedAt, link.Id)
 	if err != nil {
 		log.Println(err)
@@ -222,9 +222,9 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 
 func (d *SQLiteClient) Delete(id int) error {
 	db := d.client
-    // delete associations
-    // leave labels if not associated with other links
-    // delete link
+	// delete associations
+	// leave labels if not associated with other links
+	// delete link
 	_, err := db.Exec("DELETE from links WHERE id = " + strconv.Itoa(id))
 	if err != nil {
 		log.Println(err)

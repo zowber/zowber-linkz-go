@@ -13,6 +13,6 @@ func TestGet(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	newLink := &linkzapp.Link{Name: "test", Url: "test.com", Labels: "testlabel", CreatedAt: 1234567890}
+	newLink := &linkzapp.Link{}
 	db.Insert(newLink)
 }
