@@ -183,14 +183,14 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 	db := d.client
 
 	// 1. have labels changed?
-	// 2. then delete or add labels
+	// 2. then compare new with old, delete or add labels as required
 	// 3. has link changed?
 	// 4. then update link
 	// 5. update associations?
 
 	// 1. get current labels
 	// get the labels
-	labelRows, err := db.Query(`
+    currLabelRows, err := db.Query(`
 		SELECT labels.id, labels.name AS name
 		FROM labels
 		INNER JOIN link_labels ON labels.id = link_labels.label_id
@@ -200,22 +200,24 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 		log.Println(err)
 	}
 
-	labels := []linkzapp.Label{}
-	for labelRows.Next() {
+	currLabels := []linkzapp.Label{}
+	for currLabelRows.Next() {
 		var labelId int
 		var labelName string
-		if err := labelRows.Scan(&labelId, &labelName); err != nil {
-			log.Println("here", err)
+		if err := currLabelRows.Scan(&labelId, &labelName); err != nil {
+			log.Println(err)
 		}
 		label := &linkzapp.Label{Id: labelId, Name: labelName}
-		labels = append(labels, *label)
+		currLabels = append(currLabels, *label)
 	}
 
-	_, err = db.Exec("UPDATE links SET Name = ?, Url = ?, Labels = ?, CreatedAt = ? WHERE Id = ?",
-		link.Name, link.Url, link.Labels, link.CreatedAt, link.Id)
-	if err != nil {
-		log.Println(err)
-	}
+    log.Println("existing labels:", currLabels)
+
+	//_, err = db.Exec("UPDATE links SET Name = ?, Url = ?, Labels = ?, CreatedAt = ? WHERE Id = ?",
+    //	link.Name, link.Url, link.Labels, link.CreatedAt, link.Id)
+	//if err != nil {
+	//	log.Println(err)
+	//}
 
 	return nil, nil
 }

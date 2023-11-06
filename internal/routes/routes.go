@@ -31,7 +31,7 @@ func NewRouter() http.Handler {
 	mux.HandleFunc("/link/create-placeholder", createPlaceholderHandler)
 	mux.HandleFunc("/link/new", createHandler)
 	mux.HandleFunc("/link/label/new", labelHandler)
-	// mux.HandleFunc("/link/edit", editHandler)
+	mux.HandleFunc("/link/edit", editHandler)
 	mux.HandleFunc("/link/delete", deleteHandler)
 
 	return mux
@@ -137,53 +137,54 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "link", link)
 }
 
-// var editHandler = func(w http.ResponseWriter, r *http.Request) {
-// 	oidStr := r.URL.Query().Get("id")
-// 	oid, err := primitive.ObjectIDFromHex(oidStr)
-// 	if err != nil {
-// 		errorHandler(w, r, http.StatusBadRequest, err)
-// 		return
-// 	}
+ var editHandler = func(w http.ResponseWriter, r *http.Request) {
+ 	idStr := r.URL.Query().Get("id")
+ 	id, err := strconv.Atoi(idStr)
+ 	if err != nil {
+ 		errorHandler(w, r, http.StatusBadRequest, err)
+ 		return
+ 	}
 
-// 	switch r.Method {
-// 	case "GET":
-// 		linkToEdit, err := db.One(oid)
-// 		if err != nil {
-// 			errorHandler(w, r, http.StatusInternalServerError, err)
-// 			return
-// 		}
+ 	switch r.Method {
+ 	case "GET":
+ 		linkToEdit, err := db.One(id)
+ 		if err != nil {
+ 			errorHandler(w, r, http.StatusInternalServerError, err)
+ 			return
+ 		}
 
-// 		tmpl := template.Must(template.New("edit.html").Funcs(funcMap).ParseFiles("./templates/edit.html", "./templates/label.html"))
-// 		tmpl.Execute(w, linkToEdit)
-// 	case "PUT":
-// 		name := r.PostFormValue("name")
-// 		url := r.PostFormValue("url")
+ 		tmpl := template.Must(template.New("edit.html").Funcs(funcMap).ParseFiles("./templates/edit.html", "./templates/label.html"))
+ 		tmpl.Execute(w, linkToEdit)
+ 	case "PUT":
+ 		name := r.PostFormValue("name")
+ 		url := r.PostFormValue("url")
 
-// 		// this seems a bit nasty
-// 		formRaw := r.Form
-// 		var labels []linkzapp.Label
-// 		for key, value := range formRaw {
-// 			if strings.Contains(key, "label_") {
-// 				labels = append(labels, linkzapp.Label{Id: key, Name: value[0]})
-// 			}
-// 		}
+		//this seems a bit nasty
+		formRaw := r.Form
+		var labels []linkzapp.Label
+		for key, value := range formRaw {
+			if strings.Contains(key, "label_") {
+				keyToI, _ := strconv.Atoi(strings.SplitAfter(key, "_")[0])
+				labels = append(labels, linkzapp.Label{Id: keyToI, Name: value[0]})
+			}
+		}
 
-// 		link := &linkzapp.Link{
-// 			Id:     oid,
-// 			Name:   name,
-// 			Url:    url,
-// 			Labels: labels,
-// 		}
-// 		updatedLink, err := db.Update(link)
-// 		if err != nil {
-// 			errorHandler(w, r, http.StatusInternalServerError, err)
-// 			return
-// 		}
+ 		link := &linkzapp.Link{
+ 			Name:   name,
+ 			Url:    url,
+ 			Labels: labels,
+ 		}
 
-// 		tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
-// 		tmpl.ExecuteTemplate(w, "link", updatedLink)
-// 	}
-// }
+ 		updatedLink, err := db.Update(id, link)
+ 		if err != nil {
+ 			errorHandler(w, r, http.StatusInternalServerError, err)
+ 			return
+ 		}
+
+ 		tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
+ 		tmpl.ExecuteTemplate(w, "link", updatedLink)
+    }
+}
 
 var labelHandler = func(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
