@@ -50,8 +50,9 @@
   </div>
 
   <div id="labels-{{ idToStr .Id }}">
-    {{ if .Labels }} {{ range .Labels }} {{ template "label" . }} {{ end }}{{
-    end }}
+    {{ if .Labels }}
+        {{ range .Labels }} {{ template "label" . }} {{ end }}
+    {{ end }}
   </div>
 
   <div class="row mb-3">

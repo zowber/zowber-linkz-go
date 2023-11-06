@@ -40,12 +40,13 @@ func NewDbClient() (*SQLiteClient, error) {
 	if err != nil {
 		log.Println(err)
 	}
-	return &SQLiteClient{db}, nil
+	return &SQLiteClient{db}, err
 }
 
 func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 	db := d.client
 
+    log.Println("Get All")
 	rows, err := db.Query(`
 		SELECT * FROM links
 	`)
@@ -82,8 +83,10 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 			label := &linkzapp.Label{Id: labelId, Name: labelName}
 			labels = append(labels, *label)
 		}
+        // build the link
 		link := &linkzapp.Link{Id: &id, Name: name, Url: url, Labels: labels, CreatedAt: createdat}
-		links = append(links, link)
+		// append the link to the links slice
+        links = append(links, link)
 	}
 
 	return links, err
@@ -92,13 +95,17 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
 	db := d.client
 
-	log.Println("getting one with id:", id)
-	row := db.QueryRow("SELECT * from links WHERE id = " + strconv.Itoa(id) + " LIMIT 1;")
+	log.Println("Get One with id", id)
+	row := db.QueryRow(`
+        SELECT * from links
+        WHERE id = ?
+        LIMIT 1;
+    `, id)
 
 	var Id, Createdat int
 	var Name, Url string
 	if err := row.Scan(&Id, &Name, &Url, &Createdat); err != nil {
-		log.Println(err)
+        log.Println(err)
 	}
 
 	// get the label(s)
@@ -133,7 +140,7 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
 	// start a new txn
 	tx, err := db.Begin()
 	if err != nil {
-		log.Println(err)
+		log.Println("Err begining Insert txn", err)
 	}
 
 	// insert the link
@@ -144,7 +151,7 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
         RETURNING id;
         `, link.Name, link.Url, link.CreatedAt).Scan(&linkId)
 	if err != nil {
-		log.Println("Err insering link:", err)
+		log.Println("Err Inserting link:", err)
 	}
 
 	// insert the label(s)
@@ -156,7 +163,7 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
             RETURNING id;
 		`, label.Name).Scan(&labelIds[i])
 		if err != nil {
-			log.Println("Err inserting link labels:", err)
+			log.Println("Err Inserting labels:", err)
 		}
 	}
 
@@ -189,13 +196,12 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 	// 5. update associations?
 
 	// 1. get current labels
-	// get the labels
     currLabelRows, err := db.Query(`
 		SELECT labels.id, labels.name AS name
 		FROM labels
 		INNER JOIN link_labels ON labels.id = link_labels.label_id
 		WHERE link_labels.link_id = ?;
-		`, link.Id)
+        `, id)
 	if err != nil {
 		log.Println(err)
 	}
@@ -211,8 +217,8 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 		currLabels = append(currLabels, *label)
 	}
 
-    log.Println("existing labels:", currLabels)
-
+    log.Println("Existing labels:", currLabels)
+    log.Println("New labels:", link.Labels)
 	//_, err = db.Exec("UPDATE links SET Name = ?, Url = ?, Labels = ?, CreatedAt = ? WHERE Id = ?",
     //	link.Name, link.Url, link.Labels, link.CreatedAt, link.Id)
 	//if err != nil {

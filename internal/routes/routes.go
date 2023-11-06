@@ -81,7 +81,8 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 			for key, value := range formRaw {
 				if strings.Contains(key, "label_") {
 					keyToI, _ := strconv.Atoi(strings.SplitAfter(key, "_")[0])
-					labels = append(labels, linkzapp.Label{Id: keyToI, Name: value[0]})
+                    log.Println("building label with key, keyToI, value:", key, keyToI, value) 
+                    labels = append(labels, linkzapp.Label{Id: keyToI, Name: value[0]})
 				}
 			}
 
@@ -165,7 +166,8 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 		for key, value := range formRaw {
 			if strings.Contains(key, "label_") {
 				keyToI, _ := strconv.Atoi(strings.SplitAfter(key, "_")[0])
-				labels = append(labels, linkzapp.Label{Id: keyToI, Name: value[0]})
+                log.Println("keyToI:", keyToI)
+                labels = append(labels, linkzapp.Label{Id: keyToI, Name: value[0]})
 			}
 		}
 
@@ -198,7 +200,8 @@ var labelHandler = func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data := map[string]string{"Id": id, "Name": name}
-		tmpl := template.Must(template.New("label.html").ParseFiles("./templates/label.html"))
+
+        tmpl := template.Must(template.New("label.html").ParseFiles("./templates/label.html"))
 		tmpl.ExecuteTemplate(w, "label", data)
 	}
 }
