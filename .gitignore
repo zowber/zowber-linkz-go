@@ -4,6 +4,9 @@
 *.sqlite
 *.sqlite-journal
 
+node_modules
+
 bin/
 tmp/
 vendor/
+
