@@ -155,17 +155,43 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
 	}
 
 	// insert the label(s)
-	labelIds := make([]int, len(link.Labels))
-	for i, label := range link.Labels {
-		err = tx.QueryRow(`
-            INSERT INTO labels (name)
-           	VALUES (?)
-            RETURNING id;
-		`, label.Name).Scan(&labelIds[i])
-		if err != nil {
-			log.Println("Err Inserting labels:", err)
-		}
-	}
+    // - check if label already exists
+    labelIds := make([]int, len(link.Labels))
+    for i, label := range link.Labels {
+        var dupeId int 
+        log.Println("dupeId is:", dupeId)
+        err = tx.QueryRow(`
+        SELECT id FROM labels WHERE name = ?;
+        `, label.Name).Scan(&dupeId)
+        if err != nil {
+        log.Println("Error checking for existing label", err)}
+        if dupeId != 0 {
+            log.Printf("Label %s exists already with id %d", label.Name, dupeId)
+            labelIds[i] = dupeId
+        } else {
+            err = tx.QueryRow(`
+                INSERT INTO labels (name)
+                VALUES (?)
+                RETURNING id;
+            `, label.Name).Scan(&labelIds[i])
+            if err != nil {
+                log.Println("Err Inserting new label:", err)
+            }
+        }
+    }
+    
+    log.Println("labelIds is:", labelIds)
+//	labelIds := make([]int, len(link.Labels))
+//	for i, label := range link.Labels {
+//		err = tx.QueryRow(`
+//          INSERT INTO labels (name)
+//         	VALUES (?)
+//          RETURNING id;
+//		`, label.Name).Scan(&labelIds[i])
+//		if err != nil {
+//			log.Println("Err Inserting labels:", err)
+//		}
+//	}
 
 	// insert the relations
 	for _, labelId := range labelIds {
