@@ -164,7 +164,7 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 		formRaw := r.Form
 		var labels []linkzapp.Label
 		for key, value := range formRaw {
-			if strings.Contains(key, "label_") {
+			if strings.Contains(key, "label-") {
                 labels = append(labels, linkzapp.Label{Name: value[0]})
 			}
 		}

@@ -232,6 +232,17 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 
     log.Println("Existing labels:", currLabels)
     log.Println("New labels:", link.Labels)
+
+    // compare new and existing labels
+
+    // if same do nothing
+
+    // if added then add label(s)/check if they exist in db already
+
+    // if removed then delete association, and if label is now orphan delete it
+
+    // update associations
+
 	//_, err = db.Exec("UPDATE links SET Name = ?, Url = ?, Labels = ?, CreatedAt = ? WHERE Id = ?",
     //	link.Name, link.Url, link.Labels, link.CreatedAt, link.Id)
 	//if err != nil {
