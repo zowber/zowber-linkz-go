@@ -1,7 +1,7 @@
 package linkzapp
 
 type Label struct {
-	Id   int    `bson:"id,omitempty"`
+	Id   *int    `bson:"id,omitempty"`
 	Name string `bson:"name,omitempty"`
 }
 

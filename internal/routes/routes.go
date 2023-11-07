@@ -79,10 +79,10 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 			formRaw := r.Form
 			var labels []linkzapp.Label
 			for key, value := range formRaw {
-				if strings.Contains(key, "label_") {
-					keyToI, _ := strconv.Atoi(strings.SplitAfter(key, "_")[0])
-                    log.Println("building label with key, keyToI, value:", key, keyToI, value) 
-                    labels = append(labels, linkzapp.Label{Id: keyToI, Name: value[0]})
+				if strings.Contains(key, "label-") {
+					//keyToI, _ := strconv.Atoi(strings.SplitAfter(key, "_")[0])
+                    log.Println("building label with key, value[0]:", key,value[0]) 
+                    labels = append(labels, linkzapp.Label{Name: value[0]})
 				}
 			}
 
@@ -160,14 +160,12 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
  		name := r.PostFormValue("name")
  		url := r.PostFormValue("url")
 
-		//this seems a bit nasty
+		//this seems a bit less nasty than it was
 		formRaw := r.Form
 		var labels []linkzapp.Label
 		for key, value := range formRaw {
 			if strings.Contains(key, "label_") {
-				keyToI, _ := strconv.Atoi(strings.SplitAfter(key, "_")[0])
-                log.Println("keyToI:", keyToI)
-                labels = append(labels, linkzapp.Label{Id: keyToI, Name: value[0]})
+                labels = append(labels, linkzapp.Label{Name: value[0]})
 			}
 		}
 
@@ -191,14 +189,10 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 var labelHandler = func(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-		name := r.PostFormValue("new-label")
-		rawId := strings.Split(name, " ")
-
-		id := "label_"
-		for i := 0; i < len(rawId); i++ {
-			id = id + rawId[i]
-		}
-
+        // TODO: This is probally fine, but maybe make this temp id more unique
+        id := strconv.Itoa(int(time.Now().Unix()))
+        name := r.PostFormValue("new-label")
+		
 		data := map[string]string{"Id": id, "Name": name}
 
         tmpl := template.Must(template.New("label.html").ParseFiles("./templates/label.html"))

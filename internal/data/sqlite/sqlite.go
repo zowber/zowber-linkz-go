@@ -80,7 +80,7 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 			if err := labelRows.Scan(&labelId, &labelName); err != nil {
 				log.Println("here", err)
 			}
-			label := &linkzapp.Label{Id: labelId, Name: labelName}
+			label := &linkzapp.Label{Id: &labelId, Name: labelName}
 			labels = append(labels, *label)
 		}
         // build the link
@@ -126,7 +126,7 @@ func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
 		if err := labelRows.Scan(&labelId, &labelName); err != nil {
 			log.Println("Err scanning label rows", err)
 		}
-		label := &linkzapp.Label{Id: labelId, Name: labelName}
+		label := &linkzapp.Label{Id: &labelId, Name: labelName}
 		Labels = append(Labels, *label)
 	}
 	link := &linkzapp.Link{Id: &id, Name: Name, Url: Url, Labels: Labels, CreatedAt: Createdat}
@@ -154,19 +154,19 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
 		log.Println("Err Inserting link:", err)
 	}
 
-	// insert the label(s)
-    // - check if label already exists
+    // get id of existing labels and/or
+    // insert new unique labels and get their id
     labelIds := make([]int, len(link.Labels))
     for i, label := range link.Labels {
         var dupeId int 
-        log.Println("dupeId is:", dupeId)
         err = tx.QueryRow(`
-        SELECT id FROM labels WHERE name = ?;
-        `, label.Name).Scan(&dupeId)
+            SELECT id FROM labels WHERE name = ?;
+            `, label.Name).Scan(&dupeId)
         if err != nil {
-        log.Println("Error checking for existing label", err)}
+            log.Println("Err checking for existing label", err)
+        }
+
         if dupeId != 0 {
-            log.Printf("Label %s exists already with id %d", label.Name, dupeId)
             labelIds[i] = dupeId
         } else {
             err = tx.QueryRow(`
@@ -180,19 +180,6 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
         }
     }
     
-    log.Println("labelIds is:", labelIds)
-//	labelIds := make([]int, len(link.Labels))
-//	for i, label := range link.Labels {
-//		err = tx.QueryRow(`
-//          INSERT INTO labels (name)
-//         	VALUES (?)
-//          RETURNING id;
-//		`, label.Name).Scan(&labelIds[i])
-//		if err != nil {
-//			log.Println("Err Inserting labels:", err)
-//		}
-//	}
-
 	// insert the relations
 	for _, labelId := range labelIds {
 		_, err = tx.Exec(`
@@ -239,7 +226,7 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 		if err := currLabelRows.Scan(&labelId, &labelName); err != nil {
 			log.Println(err)
 		}
-		label := &linkzapp.Label{Id: labelId, Name: labelName}
+		label := &linkzapp.Label{Id: &labelId, Name: labelName}
 		currLabels = append(currLabels, *label)
 	}
 
