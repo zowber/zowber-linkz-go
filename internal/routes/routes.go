@@ -80,8 +80,7 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 			var labels []linkzapp.Label
 			for key, value := range formRaw {
 				if strings.Contains(key, "label-") {
-					//keyToI, _ := strconv.Atoi(strings.SplitAfter(key, "_")[0])
-                    log.Println("building label with key, value[0]:", key,value[0]) 
+                    log.Println("Building label with key, value[0]:", key,value[0]) 
                     labels = append(labels, linkzapp.Label{Name: value[0]})
 				}
 			}
@@ -99,7 +98,6 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 				errorHandler(w, r, http.StatusInternalServerError, err)
 				return
 			}
-            log.Println("inserted. id", newLinkId)
 
             newLink, err := db.One(newLinkId)
             if err != nil {

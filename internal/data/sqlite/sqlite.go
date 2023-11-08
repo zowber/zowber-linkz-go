@@ -231,61 +231,58 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 	}
 
     currLabels := link.Labels
-
-    // compare new and existing labels
-    // e.g.,
-    // prevLabels       currLabels
-    // ----------       ----------
-    // hypermedia       hypermedia
-    // javascript       website
-    //                  front end
-    //
-    // newLabels        unwantedLabels
-    // ----------       ----------
-    // hypermedia       javascript
-    // website
-    // front end
-
-    // for each prevLabel
-    // are they still in currLabel?
-    // if yes then add to newLabels
-    // if no then add to unwantedLabels
-
-    newLabels := []linkzapp.Label{}
-    unwantedLabels := []linkzapp.Label{}
+    var newLabels, unwantedLabels []linkzapp.Label
 
     prevMap := make(map[string]bool)
     for _, label := range prevLabels {
         prevMap[label.Name] = true
     }
-
-    // for each currLabel
     for _, currLabel := range currLabels {
         if _, exists := prevMap[currLabel.Name]; exists {
-            // label exists in prev and curr, so remove it
-            unwantedLabels = append(unwantedLabels, currLabel)
+            newLabels = append(newLabels, currLabel)
         } else {
-            // label exists in curr but not in prev, so keep it
             newLabels = append(newLabels, currLabel)
         }
     }
 
-    log.Println("unwantned labels", unwantedLabels)
-    log.Println("wanted labels", newLabels)
+    newMap := make(map[string]bool)
+    for _, label := range newLabels {
+        newMap[label.Name] = true 
+    }
+    for _, prevLabel := range prevLabels {
+        if _, exists := newMap[prevLabel.Name]; exists {
+            unwantedLabels = append(unwantedLabels, prevLabel)
+        }
+    }
    
-    // remove associations to unwanted labels
     // get the ids of labels to remove from the link
     for i, label := range unwantedLabels {
         var uwlId int
         db.QueryRow(`
             SELECT id FROM labels
             WHERE Name = ?
-        `, label.Id).Scan(&uwlId)
+        `, label.Name).Scan(&uwlId)
         unwantedLabels[i] = linkzapp.Label{ Id: &uwlId, Name: label.Name }
     }
-    log.Println("unwanted labels with ids", unwantedLabels)
+
+    // remove the associations
+    // TODO: combine this and previous query into a single statement
+    for _, label := range unwantedLabels {
+        db.Exec(`
+            DELETE FROM link_labels
+            WHERE link_id = ? AND label_id = ?
+        `, id, *label.Id)
+    }
 
     // insert new labels
+    for _, label := range newLabels {
+        db.Exec(`
+            INSERT INTO labels (name)
+            VALUES ?
+            `, label.Name)
+
+            
+    }    
 
     // insert associations to new labels (some of which may be existing)
 
