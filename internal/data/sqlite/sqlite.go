@@ -49,6 +49,7 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
     log.Println("Get All")
 	rows, err := db.Query(`
 		SELECT * FROM links
+        ORDER BY id DESC;
 	`)
 	if err != nil {
 		log.Println(err)
@@ -59,7 +60,7 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 		var id, createdat int
 		var name, url string
 		if err := rows.Scan(&id, &name, &url, &createdat); err != nil {
-			log.Println(err)
+			log.Println("Err scanning link row", err)
 		}
 
 		// get the labels
@@ -78,14 +79,12 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 			var labelId int
 			var labelName string
 			if err := labelRows.Scan(&labelId, &labelName); err != nil {
-				log.Println("here", err)
+				log.Println("Err scanning label row", err)
 			}
 			label := &linkzapp.Label{Id: &labelId, Name: labelName}
 			labels = append(labels, *label)
 		}
-        // build the link
 		link := &linkzapp.Link{Id: &id, Name: name, Url: url, Labels: labels, CreatedAt: createdat}
-		// append the link to the links slice
         links = append(links, link)
 	}
 
@@ -96,17 +95,16 @@ func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
 	db := d.client
 
 	log.Println("Get One with id", id)
-	row := db.QueryRow(`
+    var Id, Createdat int
+    var Name, Url string
+    err := db.QueryRow(`
         SELECT * from links
         WHERE id = ?
         LIMIT 1;
-    `, id)
-
-	var Id, Createdat int
-	var Name, Url string
-	if err := row.Scan(&Id, &Name, &Url, &Createdat); err != nil {
-        log.Println(err)
-	}
+    `, id).Scan(&Id, &Name, &Url, &Createdat)
+    if err != nil {
+        log.Println("Err getting link", err)
+    }
 
 	// get the label(s)
 	var Labels []linkzapp.Label
@@ -129,7 +127,7 @@ func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
 		label := &linkzapp.Label{Id: &labelId, Name: labelName}
 		Labels = append(Labels, *label)
 	}
-	link := &linkzapp.Link{Id: &id, Name: Name, Url: Url, Labels: Labels, CreatedAt: Createdat}
+	link := &linkzapp.Link{Id: &Id, Name: Name, Url: Url, Labels: Labels, CreatedAt: Createdat}
 
 	return link, nil
 }
@@ -143,7 +141,7 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
 		log.Println("Err begining Insert txn", err)
 	}
 
-	// insert the link
+	// insert link and get it's id
 	var linkId int
 	err = tx.QueryRow(`
         INSERT INTO links (name, url, createdat)
@@ -154,20 +152,20 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
 		log.Println("Err Inserting link:", err)
 	}
 
-    // get id of existing labels and/or
-    // insert new unique labels and get their id
+    // get id of any existing labels
+    // insert any new labels and get their id
     labelIds := make([]int, len(link.Labels))
     for i, label := range link.Labels {
-        var dupeId int 
+        var existsId int 
         err = tx.QueryRow(`
             SELECT id FROM labels WHERE name = ?;
-            `, label.Name).Scan(&dupeId)
+            `, label.Name).Scan(&existsId)
         if err != nil {
-            log.Println("Err checking for existing label", err)
+            log.Println("Err checking if label exists", err)
         }
 
-        if dupeId != 0 {
-            labelIds[i] = dupeId
+        if existsId != 0 {
+            labelIds[i] = existsId
         } else {
             err = tx.QueryRow(`
                 INSERT INTO labels (name)
@@ -187,7 +185,7 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
             VALUES (?, ?)
         `, linkId, labelId)
 		if err != nil {
-			log.Println("Err inserting link-label relation:", err)
+			log.Println("Err Inserting link-label association:", err)
 		}
 	}
 
@@ -208,7 +206,7 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 	// 4. then update link
 	// 5. update associations?
 
-	// 1. get prev labels
+	// get prev labels
     prevLabelRows, err := db.Query(`
 		SELECT labels.id, labels.name AS name
 		FROM labels
@@ -230,7 +228,12 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 		prevLabels = append(prevLabels, *label)
 	}
 
+    log.Println("prevLabels", prevLabels)
+
     currLabels := link.Labels
+
+    log.Println("currLabels", currLabels)
+
     var newLabels, unwantedLabels []linkzapp.Label
 
     prevMap := make(map[string]bool)
@@ -239,18 +242,23 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
     }
     for _, currLabel := range currLabels {
         if _, exists := prevMap[currLabel.Name]; exists {
+            log.Println("append to newLabels", currLabel)
             newLabels = append(newLabels, currLabel)
         } else {
+            log.Println("append to newLabels", currLabel)
             newLabels = append(newLabels, currLabel)
         }
     }
 
+    log.Println("newLabels", newLabels)
+
     newMap := make(map[string]bool)
-    for _, label := range newLabels {
+    for _, label := range currLabels {
         newMap[label.Name] = true 
     }
     for _, prevLabel := range prevLabels {
-        if _, exists := newMap[prevLabel.Name]; exists {
+        if _, exists := newMap[prevLabel.Name]; !exists {
+            log.Println("appending to unwantedLabel", prevLabel)
             unwantedLabels = append(unwantedLabels, prevLabel)
         }
     }
@@ -258,31 +266,33 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
     // get the ids of labels to remove from the link
     for i, label := range unwantedLabels {
         var uwlId int
-        db.QueryRow(`
+        if err := db.QueryRow(`
             SELECT id FROM labels
             WHERE Name = ?
-        `, label.Name).Scan(&uwlId)
+        `, label.Name).Scan(&uwlId); err != nil {
+            log.Println(err)
+        }
         unwantedLabels[i] = linkzapp.Label{ Id: &uwlId, Name: label.Name }
     }
 
     // remove the associations
     // TODO: combine this and previous query into a single statement
-    for _, label := range unwantedLabels {
-        db.Exec(`
-            DELETE FROM link_labels
-            WHERE link_id = ? AND label_id = ?
-        `, id, *label.Id)
-    }
+    //for _, label := range unwantedLabels {
+    //    db.Exec(`
+    //        DELETE FROM link_labels
+    //        WHERE link_id = ? AND label_id = ?
+    //    `, id, *label.Id)
+    //}
 
     // insert new labels
-    for _, label := range newLabels {
-        db.Exec(`
-            INSERT INTO labels (name)
-            VALUES ?
-            `, label.Name)
+    //for _, label := range newLabels {
+    //    db.Exec(`
+    //        INSERT INTO labels (name)
+    //        VALUES ?
+    //        `, label.Name)
 
             
-    }    
+    //}    
 
     // insert associations to new labels (some of which may be existing)
 
