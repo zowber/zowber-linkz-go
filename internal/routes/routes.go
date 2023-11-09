@@ -173,11 +173,16 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
  			Labels: labels,
  		}
 
- 		updatedLink, err := db.Update(id, link)
+ 		_, err := db.Update(id, link)
  		if err != nil {
  			errorHandler(w, r, http.StatusInternalServerError, err)
  			return
  		}
+
+        updatedLink, err := db.One(id)
+        if err != nil {
+            errorHandler(w, r, http.StatusInternalServerError, err)
+        }
 
  		tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
  		tmpl.ExecuteTemplate(w, "link", updatedLink)
