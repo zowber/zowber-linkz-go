@@ -93,17 +93,20 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 
 func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
 	db := d.client
+    // TODO: is it necessary do do defer db.Close() ??
 
 	log.Println("Get One with id", id)
 	var Id, Createdat int
 	var Name, Url string
+
 	err := db.QueryRow(`
         SELECT * from links
         WHERE id = ?
         LIMIT 1;
     `, id).Scan(&Id, &Name, &Url, &Createdat)
 	if err != nil {
-		log.Println("Err getting link", err)
+        log.Printf("Err getting link %d: %s", id, err)
+        return nil, err
 	}
 
 	// get the label(s)

@@ -1,6 +1,6 @@
 <form
   class="mt-3"
-  hx-put="/link/edit?id={{ idToStr .Id }}"
+  hx-put="/link?id={{ idToStr .Id }}"
   hx-params="not new-label"
   hx-target="#link-{{ idToStr .Id }}"
   hx-swap="outerHTML"

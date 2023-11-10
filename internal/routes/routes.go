@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -26,23 +27,22 @@ var funcMap = template.FuncMap{
 func NewRouter() http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", indexHandler)
+	mux.HandleFunc("/links", linksHandler)
 	mux.HandleFunc("/link", linkHandler)
+	// /link/:id/labels
+	// /link/:id/label/:id
+
 	mux.HandleFunc("/link/create-placeholder", createPlaceholderHandler)
-	mux.HandleFunc("/link/new", createHandler)
+
 	mux.HandleFunc("/link/label/new", labelHandler)
 	mux.HandleFunc("/link/edit", editHandler)
-	mux.HandleFunc("/link/delete", deleteHandler)
 
-    // mux.HandleFunc("/links", linksHandler)   // GET
-    // mux.HandleFunc("/link", linkHandler)     // GET, POST, PUT, DELETE
-    // mux.HandleFunc("/labels", labelsHandler) // GET
-    // mux.HandleFunc("/label", labelsHandler)  // POST
-    // what about...
-    // /link/:id/labels
-    // /link/:id/label/:id
-    // /labels
-    // /label/:id/links
+	mux.HandleFunc("/labels", labelsHandler) // GET
+	mux.HandleFunc("/label", labelHandler)   // POST
+	// /label/:id/links
+
+	// what about...
+	// /labels
 
 	return mux
 }
@@ -58,19 +58,48 @@ var createPlaceholderHandler = func(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "create-placeholder", nil)
 }
 
-var indexHandler = func(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		errorHandler(w, r, http.StatusNotFound, err)
-		return
+var linksHandler = func(w http.ResponseWriter, r *http.Request) {
+
+	accepts := make(map[string]bool)
+	for _, el := range strings.Split(r.Header["Accept"][0], ",") {
+		accepts[el] = true
 	}
 
-	links, err := db.All()
-	if err != nil {
-		log.Print(err.Error())
+	if accepts["text/html"] || accepts["*/*"] {
+		switch r.Method {
+		case "GET":
+			links, err := db.All()
+			if err != nil {
+				log.Print(err.Error())
+			}
+
+			tmpl := template.Must(template.New("index.html").Funcs(funcMap).ParseFiles("./templates/index.html", "./templates/header.html", "./templates/create-placeholder.html", "./templates/links.html", "./templates/link.html", "./templates/footer.html"))
+			tmpl.Execute(w, links)
+		default:
+			errorHandler(w, r, http.StatusMethodNotAllowed, err)
+		}
 	}
 
-	tmpl := template.Must(template.New("index.html").Funcs(funcMap).ParseFiles("./templates/index.html", "./templates/header.html", "./templates/create-placeholder.html", "./templates/links.html", "./templates/link.html", "./templates/footer.html"))
-	tmpl.Execute(w, links)
+    if accepts["application/json"] {
+        switch r.Method {
+        case "GET":
+            links, err := db.All()
+            if err != nil {
+                log.Println(err)
+            }
+
+            jsonData, err := json.Marshal(links)
+            if err != nil {
+                log.Println(err)
+            }
+
+            w.Header().Set("Content-Type:", "application/json")
+            w.Write(jsonData)
+
+        default:
+            errorHandler(w, r, http.StatusMethodNotAllowed, err)
+        } 
+    }
 }
 
 var createHandler = func(w http.ResponseWriter, r *http.Request) {
@@ -90,8 +119,8 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 			var labels []linkzapp.Label
 			for key, value := range formRaw {
 				if strings.Contains(key, "label-") {
-                    log.Println("Building label with key, value[0]:", key,value[0]) 
-                    labels = append(labels, linkzapp.Label{Name: value[0]})
+					log.Println("Building label with key, value[0]:", key, value[0])
+					labels = append(labels, linkzapp.Label{Name: value[0]})
 				}
 			}
 
@@ -101,20 +130,20 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 				Labels:    labels,
 				CreatedAt: int(time.Now().Unix()),
 			}
-            
-            log.Println("inserting", link) 
+
+			log.Println("inserting", link)
 			newLinkId, err := db.Insert(link)
 			if err != nil {
 				errorHandler(w, r, http.StatusInternalServerError, err)
 				return
 			}
 
-            newLink, err := db.One(newLinkId)
-            if err != nil {
-                log.Println("Err getting inserted link", err)
-            }
+			newLink, err := db.One(newLinkId)
+			if err != nil {
+				log.Println("Err getting inserted link", err)
+			}
 
-            tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
+			tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
 			tmpl.ExecuteTemplate(w, "link", newLink)
 		}
 	}
@@ -122,6 +151,179 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 
 var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 
+	accepts := make(map[string]bool)
+	for _, el := range strings.Split(r.Header["Accept"][0], ",") {
+		accepts[el] = true
+	}
+
+	if accepts["text/html"] || accepts["*/*"] {
+		log.Println("Client accepts text/html")
+
+		switch r.Method {
+		case "GET":
+			log.Println("GET")
+
+			idStr := r.URL.Query().Get("id")
+			id, err := strconv.Atoi(idStr)
+			if err != nil {
+				errorHandler(w, r, http.StatusBadRequest, err)
+				return
+			}
+
+			log.Println("Id:", id)
+
+			link, err := db.One(id)
+			if err != nil {
+				errorHandler(w, r, http.StatusInternalServerError, err)
+				return
+			}
+
+			tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
+			tmpl.ExecuteTemplate(w, "link", link)
+
+		case "POST":
+
+			log.Println("POST")
+			log.Println("using linkHandler/POST")
+
+			name := r.PostFormValue("name")
+			url := r.PostFormValue("url")
+
+			//this seems a bit nasty
+			formRaw := r.Form
+			var labels []linkzapp.Label
+			for key, value := range formRaw {
+				if strings.Contains(key, "label-") {
+					log.Println("Building label with key, value[0]:", key, value[0])
+					labels = append(labels, linkzapp.Label{Name: value[0]})
+				}
+			}
+
+			link := &linkzapp.Link{
+				Name:      name,
+				Url:       url,
+				Labels:    labels,
+				CreatedAt: int(time.Now().Unix()),
+			}
+
+			log.Println("inserting", link)
+			newLinkId, err := db.Insert(link)
+			if err != nil {
+				errorHandler(w, r, http.StatusInternalServerError, err)
+				return
+			}
+
+			newLink, err := db.One(newLinkId)
+			if err != nil {
+				log.Println("Err getting inserted link", err)
+			}
+
+			tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
+			tmpl.ExecuteTemplate(w, "link", newLink)
+
+		case "PUT":
+
+			log.Println("PUT")
+			log.Println("using linkHandler/PUT")
+
+			idStr := r.URL.Query().Get("id")
+			id, err := strconv.Atoi(idStr)
+			if err != nil {
+				errorHandler(w, r, http.StatusBadRequest, err)
+				return
+			}
+
+			name := r.PostFormValue("name")
+			url := r.PostFormValue("url")
+
+			//this seems a bit less nasty than it was
+			formRaw := r.Form
+			var labels []linkzapp.Label
+			for key, value := range formRaw {
+				if strings.Contains(key, "label-") {
+					labels = append(labels, linkzapp.Label{Name: value[0]})
+				}
+			}
+
+			link := &linkzapp.Link{
+				Name:   name,
+				Url:    url,
+				Labels: labels,
+			}
+
+			err = db.Update(id, link)
+			if err != nil {
+				errorHandler(w, r, http.StatusInternalServerError, err)
+				return
+			}
+
+			updatedLink, err := db.One(id)
+			if err != nil {
+				errorHandler(w, r, http.StatusInternalServerError, err)
+			}
+
+			tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
+			tmpl.ExecuteTemplate(w, "link", updatedLink)
+
+		case "DELETE":
+
+			log.Println("DELETE")
+			log.Println("using linkHandler/DELETE")
+
+			idStr := r.URL.Query().Get("id")
+			id, err := strconv.Atoi(idStr)
+			if err != nil {
+				errorHandler(w, r, http.StatusBadRequest, err)
+				return
+			}
+
+			err = db.Delete(id)
+			if err != nil {
+				errorHandler(w, r, http.StatusInternalServerError, err)
+				return
+			}
+
+		default:
+			errorHandler(w, r, http.StatusMethodNotAllowed, err)
+		}
+	}
+	if accepts["application/json"] {
+		log.Println("Client accepts application/json")
+
+		switch r.Method {
+		case "GET":
+
+			log.Println("GET")
+			log.Println("using linkHandler/GET")
+			idStr := r.URL.Query().Get("id")
+			id, err := strconv.Atoi(idStr)
+			if err != nil {
+				errorHandler(w, r, http.StatusBadRequest, err)
+				return
+			}
+
+			log.Println("Id:", id)
+
+			link, err := db.One(id)
+			if err != nil {
+				errorHandler(w, r, http.StatusInternalServerError, err)
+				return
+			}
+
+			log.Println("link:", link)
+
+			jsonData, err := json.Marshal(link)
+			if err != nil {
+				log.Println("Err masrshaling JSON", err)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(jsonData)
+		}
+	}
+}
+
+var editHandler = func(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -129,120 +331,66 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-    switch r.Method {
-    case "GET":
+	switch r.Method {
+	case "GET":
+		linkToEdit, err := db.One(id)
+		if err != nil {
+			errorHandler(w, r, http.StatusInternalServerError, err)
+			return
+		}
 
-        log.Println("GET")
-        log.Println("Id:", id)
-        
-
-        link, err := db.One(id)
-        if err != nil {
-		    errorHandler(w, r, http.StatusInternalServerError, err)
-		    return
-        }
-
-	    tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
-	    tmpl.ExecuteTemplate(w, "link", link)
-
-    case "POST":
-       
-        log.Println("POST")
-
-
-        
-    case "PUT":
-       
-        log.Println("PUT")
-
-    case "DELETE":
-       
-        log.Println("DELETE")
-
-    default:
-        errorHandler(w, r, http.StatusMethodNotAllowed, err)
-    }
-
-}
-
- var editHandler = func(w http.ResponseWriter, r *http.Request) {
- 	idStr := r.URL.Query().Get("id")
- 	id, err := strconv.Atoi(idStr)
- 	if err != nil {
- 		errorHandler(w, r, http.StatusBadRequest, err)
- 		return
- 	}
-
- 	switch r.Method {
- 	case "GET":
- 		linkToEdit, err := db.One(id)
- 		if err != nil {
- 			errorHandler(w, r, http.StatusInternalServerError, err)
- 			return
- 		}
-
- 		tmpl := template.Must(template.New("edit.html").Funcs(funcMap).ParseFiles("./templates/edit.html", "./templates/label.html"))
- 		tmpl.Execute(w, linkToEdit)
- 	case "PUT":
- 		name := r.PostFormValue("name")
- 		url := r.PostFormValue("url")
+		tmpl := template.Must(template.New("edit.html").Funcs(funcMap).ParseFiles("./templates/edit.html", "./templates/label.html"))
+		tmpl.Execute(w, linkToEdit)
+	case "PUT":
+		name := r.PostFormValue("name")
+		url := r.PostFormValue("url")
 
 		//this seems a bit less nasty than it was
 		formRaw := r.Form
 		var labels []linkzapp.Label
 		for key, value := range formRaw {
 			if strings.Contains(key, "label-") {
-                labels = append(labels, linkzapp.Label{Name: value[0]})
+				labels = append(labels, linkzapp.Label{Name: value[0]})
 			}
 		}
 
- 		link := &linkzapp.Link{
- 			Name:   name,
- 			Url:    url,
- 			Labels: labels,
- 		}
+		link := &linkzapp.Link{
+			Name:   name,
+			Url:    url,
+			Labels: labels,
+		}
 
- 		err := db.Update(id, link)
- 		if err != nil {
- 			errorHandler(w, r, http.StatusInternalServerError, err)
- 			return
- 		}
+		err := db.Update(id, link)
+		if err != nil {
+			errorHandler(w, r, http.StatusInternalServerError, err)
+			return
+		}
 
-        updatedLink, err := db.One(id)
-        if err != nil {
-            errorHandler(w, r, http.StatusInternalServerError, err)
-        }
+		updatedLink, err := db.One(id)
+		if err != nil {
+			errorHandler(w, r, http.StatusInternalServerError, err)
+		}
 
- 		tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
- 		tmpl.ExecuteTemplate(w, "link", updatedLink)
-    }
+		tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
+		tmpl.ExecuteTemplate(w, "link", updatedLink)
+	}
+}
+
+var labelsHandler = func(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement /labels
+	errorHandler(w, r, http.StatusNotImplemented, nil)
 }
 
 var labelHandler = func(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-        // TODO: This is probally fine, but maybe make this temp id more unique
-        id := strconv.Itoa(int(time.Now().Unix()))
-        name := r.PostFormValue("new-label")
-		
+		// TODO: This is probally fine, but maybe make this temp id more unique
+		id := strconv.Itoa(int(time.Now().Unix()))
+		name := r.PostFormValue("new-label")
+
 		data := map[string]string{"Id": id, "Name": name}
 
-        tmpl := template.Must(template.New("label.html").ParseFiles("./templates/label.html"))
+		tmpl := template.Must(template.New("label.html").ParseFiles("./templates/label.html"))
 		tmpl.ExecuteTemplate(w, "label", data)
-	}
-}
-
-var deleteHandler = func(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		errorHandler(w, r, http.StatusBadRequest, err)
-		return
-	}
-
-	err = db.Delete(id)
-	if err != nil {
-		errorHandler(w, r, http.StatusInternalServerError, err)
-		return
 	}
 }

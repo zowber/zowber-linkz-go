@@ -18,7 +18,7 @@
         </button>
         <button
           class="btn btn-danger ms-2"
-          hx-delete="/link/delete?id={{ idToStr .Id }}"
+          hx-delete="/link?id={{ idToStr .Id }}"
           hx-target="#link-{{ idToStr .Id }}"
           hx-swap="outerHTML"
         >
