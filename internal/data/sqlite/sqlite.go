@@ -3,7 +3,6 @@ package sqlite
 import (
 	"database/sql"
 	"log"
-	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
@@ -198,14 +197,8 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
 	return linkId, err
 }
 
-func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, error) {
+func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (error) {
 	db := d.client
-
-	// 1. have labels changed?
-	// 2. then compare new with old, delete or add labels as required
-	// 3. has link changed?
-	// 4. then update link
-	// 5. update associations?
 
 	// get prev labels
 	prevLabelRows, err := db.Query(`
@@ -219,21 +212,20 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 	}
 
 	prevLabels := []linkzapp.Label{}
+
 	for prevLabelRows.Next() {
 		var labelId int
 		var labelName string
 		if err := prevLabelRows.Scan(&labelId, &labelName); err != nil {
 			log.Println(err)
 		}
-		label := &linkzapp.Label{Id: &labelId, Name: labelName}
-		prevLabels = append(prevLabels, *label)
+		label := linkzapp.Label{Id: &labelId, Name: labelName}
+		prevLabels = append(prevLabels, label)
 	}
 
+	// determine which prevLabels are no longer wanted
 	currLabels := link.Labels
 	var unwantedLabels []linkzapp.Label
-
-	log.Println("prevLabels", prevLabels)
-	log.Println("currLabels", currLabels)
 
 	newMap := make(map[string]bool)
 	for _, label := range currLabels {
@@ -241,28 +233,23 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 	}
 	for _, prevLabel := range prevLabels {
 		if _, exists := newMap[prevLabel.Name]; !exists {
-			log.Println("appending to unwantedLabel", prevLabel)
 			unwantedLabels = append(unwantedLabels, prevLabel)
 		}
 	}
 
-	log.Println("unwantedLabels:", unwantedLabels)
-
-	// get the ids of labels to remove from the link
+	// get the ids of unwanted labels
 	for i, label := range unwantedLabels {
 		var uwlId int
 		if err := db.QueryRow(`
             SELECT id FROM labels
             WHERE Name = ?
-        `, label.Name).Scan(&uwlId); err != nil {
+            `, label.Name).Scan(&uwlId); err != nil {
 			log.Println(err)
 		}
 		unwantedLabels[i] = linkzapp.Label{Id: &uwlId, Name: label.Name}
 	}
 
-	log.Println("unwantedLabels w/ ids", unwantedLabels)
-
-	// remove the associations
+	// remove the associations between the link and unwanted labels
 	for _, label := range unwantedLabels {
 		_, err := db.Exec(`
 	        DELETE FROM link_labels
@@ -273,20 +260,20 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 		}
 	}
 
-    // TODO: remove orphan labels
+	// TODO: remove orphan labels
 
 	// insert new labels
 	for _, label := range currLabels {
 		_, err := db.Exec(`
             INSERT OR IGNORE INTO labels (name)
             VALUES (?)
-         `, label.Name)
+        `, label.Name)
 		if err != nil {
 			log.Println("Err inserting new labels", err)
 		}
 	}
 
-	// insert associations to new labels (some of which may be existing)
+	// insert associations to new labels (some of which may exist)
 	// get ids for the labels
 	for i, label := range currLabels {
 		var labelId int
@@ -297,14 +284,10 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 		if err != nil {
 			log.Println("Err getting id for currLabels", err)
 		}
-        currLabels[i] = linkzapp.Label{Id: &labelId, Name: label.Name}
+		currLabels[i] = linkzapp.Label{Id: &labelId, Name: label.Name}
 	}
 
-	for _, label := range currLabels {
-		log.Println("currLabels with ids", *label.Id, label.Name)
-	}
-
-    // insert associations
+	// insert associations between link and target labels
 	for _, label := range currLabels {
 		_, err = db.Exec(`
             INSERT OR IGNORE INTO link_labels (link_id, label_id)
@@ -315,23 +298,38 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (*linkzapp.Link, erro
 		}
 	}
 
-	//_, err = db.Exec("UPDATE links SET Name = ?, Url = ?, Labels = ?, CreatedAt = ? WHERE Id = ?",
-	//	link.Name, link.Url, link.Labels, link.CreatedAt, link.Id)
-	//if err != nil {
-	//	log.Println(err)
-	//}
+    // update the link
+	_, err = db.Exec(`
+        UPDATE links SET Name = ?, Url = ? 
+        WHERE Id = ?
+    `, link.Name, link.Url, id)
+	if err != nil {
+		log.Println("Err updating link", err)
+	}
 
-	return nil, nil
+    // should we return early in some cases?
+	return err 
 }
 
 func (d *SQLiteClient) Delete(id int) error {
 	db := d.client
+
 	// delete associations
-	// leave labels if not associated with other links
+    _, err := db.Exec(`
+        DELETE from link_labels
+        WHERE link_id = ?
+    `, id)
+    if err != nil {
+        log. Println("Err deleting associations", err)
+    }
+
 	// delete link
-	_, err := db.Exec("DELETE from links WHERE id = " + strconv.Itoa(id))
+	_, err = db.Exec(`
+        DELETE from links
+        WHERE id = ?
+    `, id)
 	if err != nil {
-		log.Println(err)
+		log.Println("Err deleting link", err)
 	}
 
 	return err
