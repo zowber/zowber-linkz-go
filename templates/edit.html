@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <form
   class="mt-3"
   hx-put="/link?id={{ idToStr .Id }}"
@@ -37,7 +38,7 @@
           type="text"
           class="form-control"
           name="new-label"
-          hx-post="/link/label/new"
+          hx-post="/label"
           hx-params="new-label"
           hx-target="#labels-{{ idToStr .Id }}"
           hx-swap="afterbegin"
