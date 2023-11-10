@@ -34,6 +34,16 @@ func NewRouter() http.Handler {
 	mux.HandleFunc("/link/edit", editHandler)
 	mux.HandleFunc("/link/delete", deleteHandler)
 
+    // mux.HandleFunc("/links", linksHandler)   // GET
+    // mux.HandleFunc("/link", linkHandler)     // GET, POST, PUT, DELETE
+    // mux.HandleFunc("/labels", labelsHandler) // GET
+    // mux.HandleFunc("/label", labelsHandler)  // POST
+    // what about...
+    // /link/:id/labels
+    // /link/:id/label/:id
+    // /labels
+    // /label/:id/links
+
 	return mux
 }
 
@@ -173,7 +183,7 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
  			Labels: labels,
  		}
 
- 		_, err := db.Update(id, link)
+ 		err := db.Update(id, link)
  		if err != nil {
  			errorHandler(w, r, http.StatusInternalServerError, err)
  			return
@@ -204,8 +214,6 @@ var labelHandler = func(w http.ResponseWriter, r *http.Request) {
 }
 
 var deleteHandler = func(w http.ResponseWriter, r *http.Request) {
-	//oidStr := r.URL.Query().Get("id")
-	//oid, err := primitive.ObjectIDFromHex(oidStr)
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
