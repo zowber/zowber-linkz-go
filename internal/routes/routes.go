@@ -121,13 +121,6 @@ var createHandler = func(w http.ResponseWriter, r *http.Request) {
 }
 
 var linkHandler = func(w http.ResponseWriter, r *http.Request) {
-	// oidStr := r.URL.Path[len("/link/"):]
-	// oidStr := r.URL.Query().Get("id")
-	// oid, err := primitive.ObjectIDFromHex(oidStr)
-	// if err != nil {
-	// 	errorHandler(w, r, http.StatusBadRequest, err)
-	// 	return
-	// }
 
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.Atoi(idStr)
@@ -136,14 +129,40 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	link, err := db.One(id)
-	if err != nil {
-		errorHandler(w, r, http.StatusInternalServerError, err)
-		return
-	}
+    switch r.Method {
+    case "GET":
 
-	tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
-	tmpl.ExecuteTemplate(w, "link", link)
+        log.Println("GET")
+        log.Println("Id:", id)
+        
+
+        link, err := db.One(id)
+        if err != nil {
+		    errorHandler(w, r, http.StatusInternalServerError, err)
+		    return
+        }
+
+	    tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
+	    tmpl.ExecuteTemplate(w, "link", link)
+
+    case "POST":
+       
+        log.Println("POST")
+
+
+        
+    case "PUT":
+       
+        log.Println("PUT")
+
+    case "DELETE":
+       
+        log.Println("DELETE")
+
+    default:
+        errorHandler(w, r, http.StatusMethodNotAllowed, err)
+    }
+
 }
 
  var editHandler = func(w http.ResponseWriter, r *http.Request) {
