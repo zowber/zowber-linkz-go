@@ -17,7 +17,7 @@
             <label for="label" class="col-sm-2 col-form-label">Label</label>
             <div class="col-sm-10">
                 <div class="input-group mb-0">
-                    <input type="text" class="form-control" name="new-label" hx-post="/label/new" hx-params="new-label"
+                    <input type="text" class="form-control" name="new-label" hx-post="/label" hx-params="new-label"
                         hx-target="#labels" hx-swap="afterbegin" hx-trigger="click from:#add-new-label"
                         hx-on::after-request="this.value=''" />
                     <a class="btn btn-outline-secondary" id="add-new-label">Add</a>
