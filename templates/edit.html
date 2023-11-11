@@ -3,7 +3,7 @@
   class="mt-3"
   hx-put="/link?id={{ idToStr .Id }}"
   hx-params="not new-label"
-  hx-target="#link-{{ idToStr .Id }}"
+  hx-target="this"
   hx-swap="outerHTML"
 >
   <div class="row mb-3">

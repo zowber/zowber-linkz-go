@@ -1,31 +1,21 @@
 {{ define "link" }}
 <div class="list-group-item list-group-item-action" id="link-{{ idToStr .Id }}">
-  <div class="d-flex w-100 justify-content-between">
-    <div>
-      <h5 class="mb-1"><a href="{{ .Url }}">{{ .Name }}</a></h5>
-      <p class="mb-1">{{ range .Labels }}<span class="badge bg-secondary me-2">{{ .Name }}</span>{{ end }}</p>
-      <small>{{ .Url }}</small>
+        <div class="d-flex w-100 justify-content-between" hx-target="this" hx-swap="outerHTML">
+            <div>
+                <h5 class="mb-1"><a href="{{ .Url }}">{{ .Name }}</a></h5>
+                <p class="mb-1">{{ range .Labels }}<span class="badge bg-secondary me-2">{{ .Name }}</span>{{ end }}</p>
+                <small>{{ .Url }}</small>
+            </div>
+            <div class="align-self-center">
+                <div>
+                    <button class="btn btn-primary" hx-get="/link/edit?id={{ idToStr .Id }}">
+                        Edit
+                    </button>
+                    <button class="btn btn-danger ms-2" hx-delete="/link?id={{ idToStr .Id }}">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="align-self-center">
-      <div>
-        <button
-          class="btn btn-primary"
-          hx-get="/link/edit?id={{ idToStr .Id }}"
-          hx-target="#link-{{ idToStr .Id }}"
-          hx-swap="innerHTML"
-        >
-          Edit
-        </button>
-        <button
-          class="btn btn-danger ms-2"
-          hx-delete="/link?id={{ idToStr .Id }}"
-          hx-target="#link-{{ idToStr .Id }}"
-          hx-swap="outerHTML"
-        >
-          Delete
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
 {{ end }}
