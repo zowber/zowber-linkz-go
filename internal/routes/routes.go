@@ -59,7 +59,7 @@ var linksHandler = func(w http.ResponseWriter, r *http.Request) {
 				log.Print(err.Error())
 			}
 
-			tmpl := template.Must(template.New("index.html").Funcs(funcMap).ParseFiles("./templates/index.html", "./templates/header.html", "./templates/create-placeholder.html", "./templates/links.html", "./templates/link.html", "./templates/footer.html"))
+			tmpl := template.Must(template.New("index.html").Funcs(funcMap).ParseFiles("./templates/index.html", "./templates/header.html", "./templates/links.html", "./templates/link.html", "./templates/footer.html"))
 			tmpl.Execute(w, links)
 		default:
 			errorHandler(w, r, http.StatusMethodNotAllowed, err)

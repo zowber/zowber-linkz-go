@@ -1,10 +1,9 @@
 <!DOCTYPE html>
+<div class="list-group-item list-group-item-action" id="link-{{ idToStr .Id }}" hx-target="this" hx-swap="outerHTML">
 <form
   class="mt-3"
   hx-put="/link?id={{ idToStr .Id }}"
   hx-params="not new-label"
-  hx-target="this"
-  hx-swap="outerHTML"
 >
   <div class="row mb-3">
     <label for="name" class="col-sm-2 col-form-label">Name</label>
