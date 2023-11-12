@@ -1,7 +1,7 @@
 {{define "label"}}
-<div class="row">
+<div class="row" id="container-{{ .Id }}">
   <div class="col-4 offset-2">
-	<div class="input-group mb-3">
+      <div class="input-group mb-3">
 	  <input
 		type="text"
 		class="form-control"
@@ -9,7 +9,7 @@
 		name="label-{{ .Id }}"
 		id="label-{{ .Id }}"
 	  />
-	  <button class="btn btn-outline-danger" type="button">Remove</button>
+      <button class="btn btn-outline-danger" type="button" onclick="removeLabelInput('container-{{.Id}}')">Remove</button>
 	</div>
   </div>
 </div>

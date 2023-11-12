@@ -1,0 +1,13 @@
+{{define "links-list"}}
+<div class="container mt-3">
+    <div class="row">
+        <div class="col">
+            <div class="list-group" id="link-list">
+                {{ if . }} {{ range . }}
+                {{ template "link" . }}
+                {{ end }}{{ end }}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
