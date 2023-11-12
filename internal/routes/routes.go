@@ -2,11 +2,12 @@ package routes
 
 import (
 	"encoding/json"
+	"html/template"
 	"log"
 	"net/http"
+    "io"
 	"strconv"
 	"strings"
-	"html/template"
 	"time"
 
 	"github.com/zowber/zowber-linkz-go/internal/data/sqlite"
@@ -27,21 +28,22 @@ var funcMap = template.FuncMap{
 func NewRouter() http.Handler {
 	mux := http.NewServeMux()
 
-    mux.HandleFunc("/", indexHandler)
+	mux.HandleFunc("/", indexHandler)
 	mux.HandleFunc("/links", linksHandler)
 	mux.HandleFunc("/link/edit", editHandler)
 	mux.HandleFunc("/link", linkHandler)
 	mux.HandleFunc("/labels", labelsHandler)
 	mux.HandleFunc("/label", labelHandler)
 	// /label/:id/links
+	mux.HandleFunc("/scripts/links.js", staticHandler)
 
-    mux.HandleFunc("/scripts/links.js", staticHandler)
+	mux.HandleFunc("/import", importHandler)
 
 	return mux
 }
 
 var staticHandler = func(w http.ResponseWriter, r *http.Request) {
-   http.ServeFile(w, r, "./static/scripts/links.js") 
+	http.ServeFile(w, r, "./static/scripts/links.js")
 }
 
 var errorHandler = func(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
@@ -51,12 +53,12 @@ var errorHandler = func(w http.ResponseWriter, r *http.Request, statusCode int, 
 }
 
 var indexHandler = func(w http.ResponseWriter, r *http.Request) {
-    if r.URL.Path != "/" {
-        errorHandler(w, r, http.StatusNotFound, err)
-        return
-    }
-    tmpl := template.Must(template.ParseFiles("./templates/index.html"))
-    tmpl.Execute(w, err)
+	if r.URL.Path != "/" {
+		errorHandler(w, r, http.StatusNotFound, err)
+		return
+	}
+	tmpl := template.Must(template.ParseFiles("./templates/index.html"))
+	tmpl.Execute(w, err)
 }
 
 var linksHandler = func(w http.ResponseWriter, r *http.Request) {
@@ -409,5 +411,37 @@ var labelHandler = func(w http.ResponseWriter, r *http.Request) {
 		if idStr != "" {
 			errorHandler(w, r, http.StatusNotImplemented, err)
 		}
+	}
+}
+
+var importHandler = func(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		tmpl := template.Must(template.ParseFiles("./templates/import.html"))
+		tmpl.Execute(w, nil)
+	case "POST":
+		log.Println("post to importHandler")
+
+		file, fileHeader, err := r.FormFile("file")
+		if err != nil {
+			log.Println("Err reading file")
+			return
+		}
+
+		// Create a buffer to read the file content
+		buffer := make([]byte, fileHeader.Size)
+        numBytes, err := file.Read(buffer)
+		if err != nil && err != io.EOF {
+			errorHandler(w, r, http.StatusInternalServerError, err)
+			return
+		}
+        
+        log.Println("num bytes:", numBytes)
+		log.Println("file contents:", string(buffer))
+        tmpl := template.Must(template.New("preview").Parse("<p>Bytes: {{ . }}</p>"))
+        tmpl.Execute(w, numBytes)
+	default:
+		errorHandler(w, r, http.StatusMethodNotAllowed, err)
+		return
 	}
 }
