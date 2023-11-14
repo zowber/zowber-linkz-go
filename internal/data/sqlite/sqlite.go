@@ -93,7 +93,7 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 
 func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
 	db := d.client
-    // TODO: is it necessary do do defer db.Close() ??
+	// TODO: is it necessary do do defer db.Close() ??
 
 	log.Println("Get One with id", id)
 	var Id, Createdat int
@@ -105,8 +105,8 @@ func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {
         LIMIT 1;
     `, id).Scan(&Id, &Name, &Url, &Createdat)
 	if err != nil {
-        log.Printf("Err getting link %d: %s", id, err)
-        return nil, err
+		log.Printf("Err getting link %d: %s", id, err)
+		return nil, err
 	}
 
 	// get the label(s)
@@ -200,7 +200,7 @@ func (d *SQLiteClient) Insert(link *linkzapp.Link) (int, error) {
 	return linkId, err
 }
 
-func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (error) {
+func (d *SQLiteClient) Update(id int, link *linkzapp.Link) error {
 	db := d.client
 
 	// get prev labels
@@ -301,7 +301,7 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (error) {
 		}
 	}
 
-    // update the link
+	// update the link
 	_, err = db.Exec(`
         UPDATE links SET Name = ?, Url = ? 
         WHERE Id = ?
@@ -310,21 +310,21 @@ func (d *SQLiteClient) Update(id int, link *linkzapp.Link) (error) {
 		log.Println("Err updating link", err)
 	}
 
-    // should we return early in some cases?
-	return err 
+	// should we return early in some cases?
+	return err
 }
 
 func (d *SQLiteClient) Delete(id int) error {
 	db := d.client
 
 	// delete associations
-    _, err := db.Exec(`
+	_, err := db.Exec(`
         DELETE from link_labels
         WHERE link_id = ?
     `, id)
-    if err != nil {
-        log. Println("Err deleting associations", err)
-    }
+	if err != nil {
+		log.Println("Err deleting associations", err)
+	}
 
 	// delete link
 	_, err = db.Exec(`

@@ -425,7 +425,7 @@ var importHandler = func(w http.ResponseWriter, r *http.Request) {
 		file, _, err := r.FormFile("file")
 		if err != nil {
 			log.Println("Err reading file", err)
-			return
+			errorHandler(w, r, http.StatusInternalServerError, err)
 		}
 
 		// parse the csv
@@ -465,16 +465,16 @@ var importHandler = func(w http.ResponseWriter, r *http.Request) {
 
 		if action == "import" {
 			log.Println("import")
-            for _, link := range links {
-                log.Println("inserting:", link)
-                _, err := db.Insert(link)
-                if err != nil {
-                    log.Println("Err inserting imported link", err)
-                }
-            }
+			for _, link := range links {
+				log.Println("inserting:", link)
+				_, err := db.Insert(link)
+				if err != nil {
+					log.Println("Err inserting imported link", err)
+				}
+			}
 
-            tmpl := template.Must(template.New("import-result").Parse("<p>Imported {{ . }} links.</p>"))
-            tmpl.Execute(w, len(links))
+			tmpl := template.Must(template.New("import-result").Parse("<p>Imported {{ . }} links.</p>"))
+			tmpl.Execute(w, len(links))
 		}
 
 	default:
