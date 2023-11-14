@@ -1,11 +1,11 @@
 package routes
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
-    "io"
 	"strconv"
 	"strings"
 	"time"
@@ -417,29 +417,66 @@ var labelHandler = func(w http.ResponseWriter, r *http.Request) {
 var importHandler = func(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		tmpl := template.Must(template.ParseFiles("./templates/import.html"))
-		tmpl.Execute(w, nil)
+		tmpl := template.Must(template.New("import.html").ParseFiles("./templates/header.html", "./templates/import.html", "./templates/footer.html"))
+		tmpl.ExecuteTemplate(w, "import", nil)
 	case "POST":
 		log.Println("post to importHandler")
 
-		file, fileHeader, err := r.FormFile("file")
+		file, _, err := r.FormFile("file")
 		if err != nil {
-			log.Println("Err reading file")
+			log.Println("Err reading file", err)
 			return
 		}
 
-		// Create a buffer to read the file content
-		buffer := make([]byte, fileHeader.Size)
-        numBytes, err := file.Read(buffer)
-		if err != nil && err != io.EOF {
-			errorHandler(w, r, http.StatusInternalServerError, err)
-			return
+		// parse the csv
+		file.Seek(0, 0)
+		reader := csv.NewReader(file)
+		records, err := reader.ReadAll()
+
+		var links []*linkzapp.Link
+
+		for i, record := range records {
+			counter := i
+			var link linkzapp.Link
+			for j, val := range record {
+				if j == 0 {
+					link.Name = val
+				}
+				if j == 1 {
+					link.Url = val
+				}
+				if j >= 2 && j < len(record) {
+					link.Labels = append(link.Labels, linkzapp.Label{Name: val})
+				}
+			}
+			link.Id = &counter
+			link.CreatedAt = int(time.Now().Unix())
+			links = append(links, &link)
 		}
-        
-        log.Println("num bytes:", numBytes)
-		log.Println("file contents:", string(buffer))
-        tmpl := template.Must(template.New("preview").Parse("<p>Bytes: {{ . }}</p>"))
-        tmpl.Execute(w, numBytes)
+
+		log.Println("links:", links)
+
+		action := r.MultipartForm.Value["action"][0]
+
+		if action == "preview" {
+			tmpl := template.Must(template.New("links-list.html").Funcs(funcMap).ParseFiles("./templates/links-list.html", "./templates/link.html"))
+			tmpl.ExecuteTemplate(w, "links-list", links)
+		}
+
+		if action == "import" {
+			log.Println("import")
+            for _, link := range links {
+                log.Println("inserting:", link)
+                _, err := db.Insert(link)
+                if err != nil {
+                    log.Println("Err inserting imported link", err)
+                }
+            }
+
+            tmpl := template.Must(template.New("import-result").Parse("<p>Imported {{ . }} links.</p>"))
+            tmpl.Execute(w, len(links))
+		}
+
 	default:
 		errorHandler(w, r, http.StatusMethodNotAllowed, err)
 		return
