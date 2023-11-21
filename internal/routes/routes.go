@@ -22,14 +22,14 @@ func idToStr(id int) string {
 }
 
 func formatDate(unixTime int) string {
-    timeVal := time.Unix(int64(unixTime), 0)
-    formatted := timeVal.Format("02 Jan 2006")
-    return formatted
+	timeVal := time.Unix(int64(unixTime), 0)
+	formatted := timeVal.Format("02 Jan 2006")
+	return formatted
 }
 
 var funcMap = template.FuncMap{
-	"idToStr": idToStr,
-    "formatDate": formatDate,
+	"idToStr":    idToStr,
+	"formatDate": formatDate,
 }
 
 func NewRouter() http.Handler {
@@ -428,41 +428,68 @@ var importHandler = func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.New("import.html").ParseFiles("./templates/header.html", "./templates/import.html", "./templates/footer.html"))
 		tmpl.ExecuteTemplate(w, "import", nil)
 	case "POST":
-		file, _, err := r.FormFile("file")
+		file, fileHeader, err := r.FormFile("file")
 		if err != nil {
 			log.Println("Err reading file", err)
 			errorHandler(w, r, http.StatusInternalServerError, err)
 		}
 
-		// parse the csv
-		file.Seek(0, 0)
-		reader := csv.NewReader(file)
-		records, err := reader.ReadAll()
-
+		fileMime := fileHeader.Header["Content-Type"][0]
 		var links []*linkzapp.Link
 
-		for i, record := range records {
-			counter := i
-			var link linkzapp.Link
-			for j, val := range record {
-				if j == 0 {
-					link.Name = val
-				}
-				if j == 1 {
-					link.Url = val
-				}
-				if j >= 2 && j < len(record) {
-					link.Labels = append(link.Labels, linkzapp.Label{Name: val})
-				}
+		file.Seek(0, 0)
+
+		if fileMime == "text/csv" {
+			reader := csv.NewReader(file)
+			records, err := reader.ReadAll()
+			if err != nil {
+				log.Println("Err reading csv file", err)
+				errorHandler(w, r, http.StatusInternalServerError, err)
 			}
-			link.Id = &counter
-			link.CreatedAt = int(time.Now().Unix())
-			links = append(links, &link)
+
+			for i, record := range records {
+				counter := i
+				var link linkzapp.Link
+				for j, val := range record {
+					if j == 0 {
+						link.Name = val
+					}
+					if j == 1 {
+						link.Url = val
+					}
+					if j >= 2 && j < len(record) {
+						link.Labels = append(link.Labels, linkzapp.Label{Name: val})
+					}
+				}
+				link.Id = &counter
+				link.CreatedAt = int(time.Now().Unix())
+				links = append(links, &link)
+			}
+		}
+
+		if fileMime == "application/json" {
+			decoder := json.NewDecoder(file)
+			err := decoder.Decode(&links)
+			if err != nil {
+				log.Println("Err decoding json", err)
+			}
+
+            // TODO: template breaks with nil ids 
+            for i, link := range links {
+                counter := i
+                link.Id = &counter
+            }
 		}
 
 		action := r.MultipartForm.Value["action"][0]
 
 		if action == "preview" {
+            
+            for _, link := range links {
+                log.Println(link)
+            }
+
+
 			tmpl := template.Must(template.New("links-list.html").Funcs(funcMap).ParseFiles("./templates/links-list.html", "./templates/link.html"))
 			tmpl.ExecuteTemplate(w, "links-list", links)
 		}
@@ -501,27 +528,27 @@ var exportHandler = func(w http.ResponseWriter, r *http.Request) {
 
 		action := r.PostFormValue("action")
 		if action == "csv" {
-            w.Header().Set("Content-Disposition", "attachment; filename=export.csv")
-	        w.Header().Set("Content-Type", "text/csv")
+			w.Header().Set("Content-Disposition", "attachment; filename=export.csv")
+			w.Header().Set("Content-Type", "text/csv")
 			writer := csv.NewWriter(w)
 
 			for _, link := range links {
-                var labels []string
-                for _, label := range link.Labels {
-                    labels = append(labels, label.Name)
-                }
-                record := []string{strconv.Itoa(*link.Id), link.Name, link.Url, strconv.Itoa(link.CreatedAt)}
-                record = append(record, labels...)
+				var labels []string
+				for _, label := range link.Labels {
+					labels = append(labels, label.Name)
+				}
+				record := []string{strconv.Itoa(*link.Id), link.Name, link.Url, strconv.Itoa(link.CreatedAt)}
+				record = append(record, labels...)
 				writer.Write(record)
 			}
-            writer.Flush()
+			writer.Flush()
 		}
 
 		if action == "json" {
-            w.Header().Set("Content-Disposition", "attachment; filename=export.json")
-	        w.Header().Set("Content-Type", "application/json")
-            writer := json.NewEncoder(w)
-            writer.Encode(links)
+			w.Header().Set("Content-Disposition", "attachment; filename=export.json")
+			w.Header().Set("Content-Type", "application/json")
+			writer := json.NewEncoder(w)
+			writer.Encode(links)
 		}
 
 	default:

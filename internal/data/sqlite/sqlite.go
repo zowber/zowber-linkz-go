@@ -8,39 +8,53 @@ import (
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
 )
 
-// CREATE TABLE "links" (
-// 	"id"	INTEGER NOT NULL,
-// 	"name"	TEXT NOT NULL,
-// 	"url"	TEXT NOT NULL,
-// 	"createdat"	INTEGER NOT NULL,
-// 	PRIMARY KEY("id" AUTOINCREMENT)
-// );
-
-// CREATE TABLE "labels" (
-// 	"id"	INTEGER NOT NULL,
-// 	"name"	TEXT NOT NULL,
-// 	PRIMARY KEY("id" AUTOINCREMENT)
-// );
-
-// CREATE TABLE "link_labels" (
-// 	"link_id"	INTEGER NOT NULL,
-// 	"label_id"	INTEGER NOT NULL,
-// 	FOREIGN KEY("link_id") REFERENCES "links"("id"),
-// 	FOREIGN KEY("label_id") REFERENCES "labels"("id"),
-// 	PRIMARY KEY("link_id","label_id")
-// );
-
 type SQLiteClient struct {
 	client *sql.DB
 }
 
 func NewDbClient() (*SQLiteClient, error) {
-	db, err := sql.Open("sqlite3", "links2.sqlite")
+	db, err := sql.Open("sqlite3", "links123.sqlite")
 	if err != nil {
-		log.Println(err)
+		log.Println("Error opening db", err)
 	}
 
 	return &SQLiteClient{db}, err
+}
+
+func CreateTables() error {
+	db, err := NewDbClient()
+    if err != nil {
+        log.Println("Err getting new db client", err)
+    }
+	stmt := `
+        CREATE TABLE "links" (
+    	"id"	INTEGER NOT NULL,
+    	"name"	TEXT NOT NULL,
+    	"url"	TEXT NOT NULL,
+    	"createdat"	INTEGER NOT NULL,
+    	PRIMARY KEY("id" AUTOINCREMENT)
+        );
+
+        CREATE TABLE "labels" (
+    	"id"	INTEGER NOT NULL,
+    	"name"	TEXT NOT NULL,
+    	PRIMARY KEY("id" AUTOINCREMENT)
+        );
+
+        CREATE TABLE "link_labels" (
+	    "link_id"	INTEGER NOT NULL,
+	    "label_id"	INTEGER NOT NULL,
+	    FOREIGN KEY("link_id") REFERENCES "links"("id"),
+	    FOREIGN KEY("label_id") REFERENCES "labels"("id"),
+	    PRIMARY KEY("link_id","label_id")
+        );      
+    `
+    _, err = db.client.Exec(stmt)
+    if err != nil {
+        log.Println("Err creatng db tables", err)
+    }
+
+    return err
 }
 
 func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
