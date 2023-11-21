@@ -21,8 +21,15 @@ func idToStr(id int) string {
 	return idStr
 }
 
+func formatDate(unixTime int) string {
+    timeVal := time.Unix(int64(unixTime), 0)
+    formatted := timeVal.Format("02 Jan 2006")
+    return formatted
+}
+
 var funcMap = template.FuncMap{
 	"idToStr": idToStr,
+    "formatDate": formatDate,
 }
 
 func NewRouter() http.Handler {
