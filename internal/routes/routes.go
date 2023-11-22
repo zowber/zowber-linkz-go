@@ -23,8 +23,8 @@ func idToStr(id int) string {
 
 func formatDate(unixTime int) string {
 	timeVal := time.Unix(int64(unixTime), 0)
-	formatted := timeVal.Format("02 Jan 2006")
-	return formatted
+	formattedTime := timeVal.Format("02 Jan 2006")
+	return formattedTime
 }
 
 var funcMap = template.FuncMap{
@@ -474,21 +474,20 @@ var importHandler = func(w http.ResponseWriter, r *http.Request) {
 				log.Println("Err decoding json", err)
 			}
 
-            // TODO: template breaks with nil ids 
-            for i, link := range links {
-                counter := i
-                link.Id = &counter
-            }
+			// TODO: template breaks with nil ids
+			for i, link := range links {
+				counter := i
+				link.Id = &counter
+			}
 		}
 
 		action := r.MultipartForm.Value["action"][0]
 
 		if action == "preview" {
-            
-            for _, link := range links {
-                log.Println(link)
-            }
 
+			for _, link := range links {
+				log.Println(link)
+			}
 
 			tmpl := template.Must(template.New("links-list.html").Funcs(funcMap).ParseFiles("./templates/links-list.html", "./templates/link.html"))
 			tmpl.ExecuteTemplate(w, "links-list", links)
