@@ -13,7 +13,7 @@ type SQLiteClient struct {
 }
 
 func NewDbClient() (*SQLiteClient, error) {
-	db, err := sql.Open("sqlite3", "links123.sqlite")
+    db, err := sql.Open("sqlite3", "linkz.sqlite")
 	if err != nil {
 		log.Println("Error opening db", err)
 	}
@@ -63,7 +63,7 @@ func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 	log.Println("Get All")
 	rows, err := db.Query(`
 		SELECT * FROM links
-        ORDER BY id DESC;
+        ORDER BY createdat DESC;
 	`)
 	if err != nil {
 		log.Println(err)
