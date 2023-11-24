@@ -23,6 +23,16 @@ func idToStr(id int) string {
 	return idStr
 }
 
+func idStrToId(idStr string) (int) {
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		// errorHandler(w, r, http.StatusBadRequest, err)
+        return -1
+	}
+	return id
+}
+
+// TODO: Refactor Link struct to use type time.Time
 func formatDate(unixTime int) string {
 	timeVal := time.Unix(int64(unixTime), 0)
 	formattedTime := timeVal.Format("02 Jan 2006")
@@ -43,7 +53,7 @@ func NewRouter() http.Handler {
 	mux.HandleFunc("/link", linkHandler)
 	mux.HandleFunc("/labels", labelsHandler)
 	mux.HandleFunc("/label", labelHandler)
-    // mux.HandleFunc("/label/:id/links")
+	// mux.HandleFunc("/label/:id/links")
 
 	mux.HandleFunc("/scripts/links.js", staticHandler)
 

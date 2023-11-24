@@ -15,7 +15,7 @@ var exportHandler = func(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.New("export.html").ParseFiles("./templates/header.html", "./templates/export.html", "./templates/footer.html"))
 		tmpl.ExecuteTemplate(w, "export", nil)
 	case "POST":
-		links, err := db.All()
+		links, err := db.All(0, 0)
 		if err != nil {
 			log.Println("Err getting all links", err)
 			errorHandler(w, r, http.StatusInternalServerError, err)

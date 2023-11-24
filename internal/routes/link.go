@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -19,28 +18,18 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 		accepts[el] = true
 	}
 
-	if accepts["text/html"] || accepts["*/*"] {
-		log.Println("Client accepts text/html")
+	idStr := r.URL.Query().Get("id")
 
+	if accepts["text/html"] || accepts["*/*"] {
 		switch r.Method {
 		case "GET":
-			log.Println("GET")
-
-			idStr := r.URL.Query().Get("id")
-
 			if idStr == "" {
 				tmpl := template.Must(template.ParseFiles("./templates/create.html"))
 				tmpl.Execute(w, nil)
 			}
 
 			if idStr != "" {
-				id, err := strconv.Atoi(idStr)
-				if err != nil {
-					errorHandler(w, r, http.StatusBadRequest, err)
-					return
-				}
-
-				link, err := db.One(id)
+				link, err := db.One(idStrToId(idStr))
 				if err != nil {
 					errorHandler(w, r, http.StatusInternalServerError, err)
 					return
@@ -50,8 +39,6 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 				tmpl.ExecuteTemplate(w, "link", link)
 			}
 		case "POST":
-			log.Println("POST")
-
 			name := r.PostFormValue("name")
 			url := r.PostFormValue("url")
 
@@ -72,7 +59,6 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 				CreatedAt: int(time.Now().Unix()),
 			}
 
-			log.Println("inserting", link)
 			newLinkId, err := db.Insert(link)
 			if err != nil {
 				errorHandler(w, r, http.StatusInternalServerError, err)
@@ -86,22 +72,8 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 
 			tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
 			tmpl.ExecuteTemplate(w, "link", newLink)
-
 		case "PUT":
-
-			log.Println("PUT")
-			log.Println("using linkHandler/PUT")
-
-			idStr := r.URL.Query().Get("id")
-
 			if idStr == "" {
-
-				id, err := strconv.Atoi(idStr)
-				if err != nil {
-					errorHandler(w, r, http.StatusBadRequest, err)
-					return
-				}
-
 				name := r.PostFormValue("name")
 				url := r.PostFormValue("url")
 
@@ -120,13 +92,13 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 					Labels: labels,
 				}
 
-				err = db.Update(id, link)
+				err = db.Update(idStrToId(idStr), link)
 				if err != nil {
 					errorHandler(w, r, http.StatusInternalServerError, err)
 					return
 				}
 
-				updatedLink, err := db.One(id)
+				updatedLink, err := db.One(idStrToId(idStr))
 				if err != nil {
 					errorHandler(w, r, http.StatusInternalServerError, err)
 				}
@@ -136,12 +108,6 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if idStr != "" {
-				id, err := strconv.Atoi(idStr)
-				if err != nil {
-					errorHandler(w, r, http.StatusBadRequest, err)
-					return
-				}
-
 				name := r.PostFormValue("name")
 				url := r.PostFormValue("url")
 
@@ -160,13 +126,13 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 					Labels: labels,
 				}
 
-				err = db.Update(id, link)
+				err = db.Update(idStrToId(idStr), link)
 				if err != nil {
 					errorHandler(w, r, http.StatusInternalServerError, err)
 					return
 				}
 
-				updatedLink, err := db.One(id)
+				updatedLink, err := db.One(idStrToId(idStr))
 				if err != nil {
 					errorHandler(w, r, http.StatusInternalServerError, err)
 				}
@@ -174,20 +140,9 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 				tmpl := template.Must(template.New("link.html").Funcs(funcMap).ParseFiles("./templates/link.html"))
 				tmpl.ExecuteTemplate(w, "link", updatedLink)
 			}
-
 		case "DELETE":
-
-			log.Println("DELETE")
-			log.Println("using linkHandler/DELETE")
-
-			idStr := r.URL.Query().Get("id")
-			id, err := strconv.Atoi(idStr)
-			if err != nil {
-				errorHandler(w, r, http.StatusBadRequest, err)
-				return
-			}
-
-			err = db.Delete(id)
+            log.Println("in handler delete, id is:", idStrToId(idStr))
+			err = db.Delete(idStrToId(idStr))
 			if err != nil {
 				errorHandler(w, r, http.StatusInternalServerError, err)
 				return
@@ -198,29 +153,13 @@ var linkHandler = func(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if accepts["application/json"] {
-		log.Println("Client accepts application/json")
-
 		switch r.Method {
 		case "GET":
-
-			log.Println("GET")
-			log.Println("using linkHandler/GET")
-			idStr := r.URL.Query().Get("id")
-			id, err := strconv.Atoi(idStr)
-			if err != nil {
-				errorHandler(w, r, http.StatusBadRequest, err)
-				return
-			}
-
-			log.Println("Id:", id)
-
-			link, err := db.One(id)
+			link, err := db.One(idStrToId(idStr))
 			if err != nil {
 				errorHandler(w, r, http.StatusInternalServerError, err)
 				return
 			}
-
-			log.Println("link:", link)
 
 			jsonData, err := json.Marshal(link)
 			if err != nil {

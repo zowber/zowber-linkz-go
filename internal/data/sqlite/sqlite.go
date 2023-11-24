@@ -18,6 +18,8 @@ func NewDbClient() (*SQLiteClient, error) {
 		log.Println("Error opening db", err)
 	}
 
+    // TODO: Check if tables exist, if not create them
+
 	return &SQLiteClient{db}, err
 }
 
@@ -57,14 +59,28 @@ func CreateTables() error {
     return err
 }
 
-func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
+func (d *SQLiteClient) TotalLinksCount() (int, error) {
+    db := d.client
+
+    var totalLinksCount int
+    err := db.QueryRow(`
+        SELECT COUNT(*) FROM links;
+    `).Scan(&totalLinksCount)
+    if err != nil {
+        log.Println("Err getting total links count", err)
+    }
+
+    return totalLinksCount, err
+}
+
+func (d *SQLiteClient) All(limit int, offset int) ([]*linkzapp.Link, error) {
 	db := d.client
 
-	log.Println("Get All")
 	rows, err := db.Query(`
 		SELECT * FROM links
-        ORDER BY createdat DESC;
-	`)
+        ORDER BY createdat DESC
+        LIMIT ? OFFSET ?;
+	`, limit, offset)
 	if err != nil {
 		log.Println(err)
 	}
