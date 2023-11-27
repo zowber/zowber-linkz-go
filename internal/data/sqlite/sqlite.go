@@ -59,6 +59,20 @@ func CreateTables() error {
     return err
 }
 
+func (d *SQLiteClient) GetSettings() (*linkzapp.Settings, error) {
+    db := d.client
+
+    var userId int
+    var username, prefersColourScheme string
+    err := db.QueryRow(`
+        SELECT * FROM settings;
+    `).Scan(&userId, &username, &prefersColourScheme)
+
+    settings := linkzapp.Settings{ UserId: userId, Username: username, PrefersColorScheme: prefersColourScheme}
+
+    return &settings, err
+}
+
 func (d *SQLiteClient) TotalLinksCount() (int, error) {
     db := d.client
 

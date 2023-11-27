@@ -11,7 +11,6 @@ import (
 
 // TODO: Sort on import so ascending dated links have ascending ids
 // TODO: Figure out the one true CSV format for import/export
-// TODO: Pagiation
 // TODO: Implement /label/:id/links
 // TODO: Stats/analytics?
 // TODO: First run/setup i.e., create tables, store some kind of config in the db, etc.
@@ -56,6 +55,8 @@ func NewRouter() http.Handler {
 	// mux.HandleFunc("/label/:id/links")
 
 	mux.HandleFunc("/scripts/links.js", staticHandler)
+
+    mux.Handle("/settings", settingsHandler())
 
 	mux.HandleFunc("/import", importHandler)
 	mux.HandleFunc("/export", exportHandler)

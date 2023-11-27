@@ -1,0 +1,22 @@
+{{define "settings"}}
+{{ template "head" .Settings}}
+
+<body>
+
+    {{ template "header" }}
+
+    <div class="container">
+        <div class="row" id="new-link">
+            <div class="col">
+                <p>Name: {{.Settings.Username}}</p>
+                <p>Preferred color scheme: {{.Settings.PrefersColorScheme}}
+            </div>
+        </div>
+    </div>
+
+    {{ template "footer" }}
+
+</body>
+
+</html>
+{{end}}

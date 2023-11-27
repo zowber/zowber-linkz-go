@@ -12,3 +12,9 @@ type Link struct {
 	Labels    []Label `json:"labels"`    //`bson:"labels,omitempty"`
 	CreatedAt int     `json:"createdat"` //`bson:"createdat,omitempty"`
 }
+
+type Settings struct {
+    UserId int
+    Username string
+    PrefersColorScheme string
+}
