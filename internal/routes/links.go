@@ -68,8 +68,8 @@ var linksHandler = func(w http.ResponseWriter, r *http.Request) {
 	if accepts["text/html"] || accepts["*/*"] {
 		switch r.Method {
 		case "GET":
-			tmpl := template.Must(template.New("links.html").Funcs(funcMap).ParseFiles("./templates/header.html", "./templates/links.html", "./templates/links-list.html", "./templates/link.html", "./templates/footer.html"))
-			tmpl.ExecuteTemplate(w, "links.html", pageData)
+			tmpl := template.Must(template.New("links.html").Funcs(funcMap).ParseFiles("./templates/header.html", "./templates/links.tmpl.html", "./templates/links-list.html", "./templates/link.html", "./templates/footer.html"))
+			tmpl.ExecuteTemplate(w, "links", pageData)
 		default:
 			errorHandler(w, r, http.StatusMethodNotAllowed, err)
 		}

@@ -13,21 +13,21 @@ type SQLiteClient struct {
 }
 
 func NewDbClient() (*SQLiteClient, error) {
-    db, err := sql.Open("sqlite3", "linkz.sqlite")
+	db, err := sql.Open("sqlite3", "linkz.sqlite")
 	if err != nil {
 		log.Println("Error opening db", err)
 	}
 
-    // TODO: Check if tables exist, if not create them
+	// TODO: Check if tables exist, if not create them
 
 	return &SQLiteClient{db}, err
 }
 
 func CreateTables() error {
 	db, err := NewDbClient()
-    if err != nil {
-        log.Println("Err getting new db client", err)
-    }
+	if err != nil {
+		log.Println("Err getting new db client", err)
+	}
 	stmt := `
         CREATE TABLE "links" (
     	"id"	INTEGER NOT NULL,
@@ -49,42 +49,54 @@ func CreateTables() error {
 	    FOREIGN KEY("link_id") REFERENCES "links"("id"),
 	    FOREIGN KEY("label_id") REFERENCES "labels"("id"),
 	    PRIMARY KEY("link_id","label_id")
-        );      
-    `
-    _, err = db.client.Exec(stmt)
-    if err != nil {
-        log.Println("Err creatng db tables", err)
-    }
+        );
 
-    return err
+        CREATE TABLE users (
+    	id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    	name TEXT NOT NULL
+        );
+
+        CREATE TABLE settings (
+	    user_id INTEGER NOT NULL,
+	    color_scheme TEXT,
+	    CONSTRAINT settings_FK FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+    `
+	_, err = db.client.Exec(stmt)
+	if err != nil {
+		log.Println("Err creatng db tables", err)
+	}
+
+	return err
 }
 
 func (d *SQLiteClient) GetSettings() (*linkzapp.Settings, error) {
-    db := d.client
+	db := d.client
 
-    var userId int
-    var username, prefersColourScheme string
-    err := db.QueryRow(`
+	var userId int
+	var username, prefersColourScheme string
+	err := db.QueryRow(`
         SELECT * FROM settings;
     `).Scan(&userId, &username, &prefersColourScheme)
 
-    settings := linkzapp.Settings{ UserId: userId, Username: username, PrefersColorScheme: prefersColourScheme}
+	settings := linkzapp.Settings{UserId: userId, Username: username, PrefersColorScheme: prefersColourScheme}
 
-    return &settings, err
+	return &settings, err
 }
 
 func (d *SQLiteClient) TotalLinksCount() (int, error) {
-    db := d.client
+	db := d.client
 
-    var totalLinksCount int
-    err := db.QueryRow(`
+	var totalLinksCount int
+	err := db.QueryRow(`
         SELECT COUNT(*) FROM links;
     `).Scan(&totalLinksCount)
-    if err != nil {
-        log.Println("Err getting total links count", err)
-    }
+	if err != nil {
+		log.Println("Err getting total links count", err)
+	}
 
-    return totalLinksCount, err
+	return totalLinksCount, err
 }
 
 func (d *SQLiteClient) All(limit int, offset int) ([]*linkzapp.Link, error) {
