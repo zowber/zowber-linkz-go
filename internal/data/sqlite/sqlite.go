@@ -60,8 +60,7 @@ func CreateTables() error {
 	    user_id INTEGER NOT NULL,
 	    color_scheme TEXT,
 	    CONSTRAINT settings_FK FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
+        );
     `
 	_, err = db.client.Exec(stmt)
 	if err != nil {
@@ -75,12 +74,12 @@ func (d *SQLiteClient) GetSettings() (*linkzapp.Settings, error) {
 	db := d.client
 
 	var userId int
-	var username, prefersColourScheme string
+	var colourScheme string
 	err := db.QueryRow(`
         SELECT * FROM settings;
-    `).Scan(&userId, &username, &prefersColourScheme)
+    `).Scan(&userId, &colourScheme)
 
-	settings := linkzapp.Settings{UserId: userId, Username: username, PrefersColorScheme: prefersColourScheme}
+	settings := linkzapp.Settings{ColorScheme: colourScheme}
 
 	return &settings, err
 }

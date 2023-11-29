@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zowber/zowber-linkz-go/internal/data/sqlite"
+	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
 )
 
 // TODO: Sort on import so ascending dated links have ascending ids
@@ -15,6 +16,10 @@ import (
 // TODO: Stats/analytics?
 // TODO: First run/setup i.e., create tables, store some kind of config in the db, etc.
 
+type AppProps struct {
+	Settings linkzapp.Settings
+}
+
 var db, err = sqlite.NewDbClient()
 
 func idToStr(id int) string {
@@ -22,11 +27,11 @@ func idToStr(id int) string {
 	return idStr
 }
 
-func idStrToId(idStr string) (int) {
+func idStrToId(idStr string) int {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		// errorHandler(w, r, http.StatusBadRequest, err)
-        return -1
+		return -1
 	}
 	return id
 }
@@ -44,22 +49,24 @@ var funcMap = template.FuncMap{
 }
 
 func NewRouter() http.Handler {
+	settings, _ := db.GetSettings()
+	appProps := AppProps{Settings: *settings}
+
+	staticDir := "./static"
+	staticServer := http.FileServer(http.Dir(staticDir))
+
 	mux := http.NewServeMux()
-
-	mux.HandleFunc("/", indexHandler)
-	mux.HandleFunc("/links", linksHandler)
-	mux.HandleFunc("/link/edit", editHandler)
-	mux.HandleFunc("/link", linkHandler)
-	mux.HandleFunc("/labels", labelsHandler)
-	mux.HandleFunc("/label", labelHandler)
+	mux.Handle("/", indexHandler())
+	mux.Handle("/links", linksHandler())
+	mux.Handle("/link/edit", editHandler())
+	mux.Handle("/link", linkHandler())
+	mux.Handle("/labels", labelsHandler())
+	mux.Handle("/label", labelHandler())
 	// mux.HandleFunc("/label/:id/links")
-
-	mux.HandleFunc("/scripts/links.js", staticHandler)
-
-    mux.Handle("/settings", settingsHandler())
-
-	mux.HandleFunc("/import", importHandler)
-	mux.HandleFunc("/export", exportHandler)
+	mux.Handle("/static", http.StripPrefix("/", staticServer))
+	mux.Handle("/settings", settingsHandler())
+	mux.Handle("/import", importHandler(appProps))
+	mux.Handle("/export", exportHandler())
 
 	return mux
 }

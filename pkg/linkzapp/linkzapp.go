@@ -15,6 +15,5 @@ type Link struct {
 
 type Settings struct {
     UserId int
-    Username string
-    PrefersColorScheme string
+    ColorScheme string
 }
