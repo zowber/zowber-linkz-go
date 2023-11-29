@@ -98,7 +98,21 @@ func (d *SQLiteClient) TotalLinksCount() (int, error) {
 	return totalLinksCount, err
 }
 
-func (d *SQLiteClient) All(limit int, offset int) ([]*linkzapp.Link, error) {
+func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
+	db := d.client
+
+	rows, err := db.Query(`
+		SELECT * FROM links
+        ORDER BY createdat DESC
+    `)
+	if err != nil {
+		log.Println(err)
+	}
+
+	return d.processLinkRows(rows), err
+}
+
+func (d *SQLiteClient) Some(limit int, offset int) ([]*linkzapp.Link, error) {
 	db := d.client
 
 	rows, err := db.Query(`
@@ -110,7 +124,12 @@ func (d *SQLiteClient) All(limit int, offset int) ([]*linkzapp.Link, error) {
 		log.Println(err)
 	}
 
-	var links []*linkzapp.Link
+	return d.processLinkRows(rows), err
+}
+
+func (d *SQLiteClient) processLinkRows(rows *sql.Rows) []*linkzapp.Link {
+	db := d.client
+    var links []*linkzapp.Link
 	for rows.Next() {
 		var id, createdat int
 		var name, url string
@@ -143,7 +162,7 @@ func (d *SQLiteClient) All(limit int, offset int) ([]*linkzapp.Link, error) {
 		links = append(links, link)
 	}
 
-	return links, err
+    return links
 }
 
 func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {

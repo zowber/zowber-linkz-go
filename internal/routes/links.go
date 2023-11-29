@@ -45,7 +45,7 @@ func linksHandler() http.HandlerFunc {
 
 		offset := (page - 1) * perPage
 
-		links, err := db.All(perPage, offset)
+		links, err := db.Some(perPage, offset)
 		if err != nil {
 			log.Print(err.Error())
 		}

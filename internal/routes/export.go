@@ -13,10 +13,10 @@ func exportHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
-			tmpl := template.Must(template.New("export.html").ParseFiles("./templates/header.html", "./templates/export.html", "./templates/footer.html"))
+			tmpl := template.Must(template.New("export.html").ParseFiles("./templates/head.html", "./templates/header.html", "./templates/export.html", "./templates/footer.html"))
 			tmpl.ExecuteTemplate(w, "export", nil)
 		case "POST":
-			links, err := db.All(0, 0)
+			links, err := db.All()
 			if err != nil {
 				log.Println("Err getting all links", err)
 				errorHandler(w, r, http.StatusInternalServerError, err)
