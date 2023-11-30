@@ -1,42 +1,37 @@
-{{ define "import" }}
-
+{{define "setup"}}
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="{{.Settings.ColorScheme}}">
-
-{{ template "head" }}
-
+{{template "head"}}
 <body>
-
     {{ template "header" }}
 
     <div class="container">
         <div class="row" id="new-link">
             <div class="col">
-                <h3>Import Links</h3>
-                <form hx-post="/import" hx-target="#result" hx-swap="innerHTML"
-                    hx-encoding="multipart/form-data">
+                <h3>Setup</h3>
+                <form method="post">
                     <div class="row mb-3">
-                        <label for="file" class="col-sm-2 col-form-label">File</label>
+                        <label for="name" class="col-sm-2 col-form-label">Name</label>
                         <div class="col-sm-10">
-                            <input type="file" class="form-control" name="file" required="required">
+                            <input type="text" class="form-control" name="name" required="required">
                         </div>
                     </div>
 
                     <div class="row mb-3">
-                        <label class="col-sm-2 col-form-label">Action</label>
+                        <label class="col-sm-2 col-form-label">Colour scheme</label>
                         <div class="col-sm-10">
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="action" value="preview"
-                                    id="action-preview" selected="selected">
+                                <input class="form-check-input" type="radio" name="theme" value="light"
+                                    id="light" selected="selected">
                                 <label class="form-check-label" for="action-preview">
-                                   Preview 
+                                   Light
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="action" value="import"
+                                <input class="form-check-input" type="radio" name="theme" value="dark"
                                     id="action-import">
                                 <label class="form-check-label" for="action-import">
-                                   Import 
+                                   Dark 
                                 </label>
                             </div>
                         </div>
@@ -44,10 +39,7 @@
 
                     <div class="row mb-3">
                         <div class="col-sm-10 offset-sm-2">
-                            <button type="submit" class="btn btn-primary me-2">Upload</button>
-                            <a class="btn btn-outline-primary" href="/links">
-                                Cancel
-                            </a>
+                            <button type="submit" class="btn btn-primary me-2">Submit</button>
                         </div>
                     </div>
                 </form>
@@ -55,11 +47,7 @@
         </div>
     </div>
 
-    <div id="result"></div>
-
-    {{ template "footer" }}
-
+    {{ template "footer"}}
 </body>
-
 </html>
-{{ end }}
+{{end}}

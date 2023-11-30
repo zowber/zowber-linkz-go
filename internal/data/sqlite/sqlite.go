@@ -84,6 +84,49 @@ func (d *SQLiteClient) GetSettings() (*linkzapp.Settings, error) {
 	return &settings, err
 }
 
+func (d *SQLiteClient) InsertUser(user *linkzapp.User) (*linkzapp.User, error) {
+	db := d.client
+
+	newUser := linkzapp.User{}
+
+	err := db.QueryRow(`
+        INSERT INTO users (name) 
+        VALUES (?)
+        RETURNING *
+    `, user.Name).Scan(&newUser.Id, &newUser.Name)
+    if err != nil {
+        log.Println("Err inserting new user", err)
+    }
+
+	return &newUser, err
+}
+
+func (d *SQLiteClient) InsertSettings(user *linkzapp.User, settings *linkzapp.Settings) error {
+	db := d.client
+
+	_, err := db.Exec(`
+        INSERT INTO settings (user_id, color_scheme)
+        VALUES (?, ?)
+    `, user.Id, settings.ColorScheme)
+	if err != nil {
+		log.Println("Err inserting settings for new user", err)
+	}
+
+	return err
+}
+
+func (d *SQLiteClient) UpdateSettings(user *linkzapp.User, settings *linkzapp.Settings) error {
+	db := d.client
+
+	_, err := db.Exec(`
+        UPDATE settings
+        SET colour_scheme = ?
+        WHERE user_id = ?;
+        `, settings.ColorScheme, user.Name)
+
+	return err
+}
+
 func (d *SQLiteClient) TotalLinksCount() (int, error) {
 	db := d.client
 
@@ -129,7 +172,7 @@ func (d *SQLiteClient) Some(limit int, offset int) ([]*linkzapp.Link, error) {
 
 func (d *SQLiteClient) processLinkRows(rows *sql.Rows) []*linkzapp.Link {
 	db := d.client
-    var links []*linkzapp.Link
+	var links []*linkzapp.Link
 	for rows.Next() {
 		var id, createdat int
 		var name, url string
@@ -162,7 +205,7 @@ func (d *SQLiteClient) processLinkRows(rows *sql.Rows) []*linkzapp.Link {
 		links = append(links, link)
 	}
 
-    return links
+	return links
 }
 
 func (d *SQLiteClient) One(id int) (*linkzapp.Link, error) {

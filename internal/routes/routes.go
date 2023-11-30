@@ -56,7 +56,8 @@ func NewRouter() http.Handler {
 	staticServer := http.FileServer(http.Dir(staticDir))
 
 	mux := http.NewServeMux()
-	mux.Handle("/", indexHandler())
+    mux.Handle("/", indexHandler())
+	mux.Handle("/setup", setupHandler(appProps))
 	mux.Handle("/links", linksHandler())
 	mux.Handle("/link/edit", editHandler())
 	mux.Handle("/link", linkHandler())
