@@ -26,10 +26,16 @@ func setupHandler(appProps AppProps) http.HandlerFunc {
 		}
 
         if r.Method == "POST" {
-            var (
+            var ( 
                 name = r.PostFormValue("name")
                 theme = r.PostFormValue("theme")
             )
+
+            err := db.CreateTables()
+            if err != nil {
+                log.Println("Err creating tables", err)
+                errorHandler(w, r, http.StatusInternalServerError, err)
+            }
 
             newUser := linkzapp.User{
                 Name: name,

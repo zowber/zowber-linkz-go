@@ -13,7 +13,7 @@ type SQLiteClient struct {
 }
 
 func NewDbClient() (*SQLiteClient, error) {
-	db, err := sql.Open("sqlite3", "linkz.sqlite")
+	db, err := sql.Open("sqlite3", "panday.sqlite")
 	if err != nil {
 		log.Println("Error opening db", err)
 	}
@@ -23,12 +23,10 @@ func NewDbClient() (*SQLiteClient, error) {
 	return &SQLiteClient{db}, err
 }
 
-func CreateTables() error {
-	db, err := NewDbClient()
-	if err != nil {
-		log.Println("Err getting new db client", err)
-	}
-	stmt := `
+func (d *SQLiteClient) CreateTables() error {
+    db := d.client
+	
+    stmt := `
         CREATE TABLE "links" (
     	"id"	INTEGER NOT NULL,
     	"name"	TEXT NOT NULL,
@@ -62,7 +60,7 @@ func CreateTables() error {
 	    CONSTRAINT settings_FK FOREIGN KEY (user_id) REFERENCES users(id)
         );
     `
-	_, err = db.client.Exec(stmt)
+    _, err := db.Exec(stmt)
 	if err != nil {
 		log.Println("Err creatng db tables", err)
 	}
@@ -84,6 +82,20 @@ func (d *SQLiteClient) GetSettings() (*linkzapp.Settings, error) {
 	return &settings, err
 }
 
+func (d *SQLiteClient) CountUsers() (int, error) {
+	db := d.client
+
+	var count int
+	err := db.QueryRow(`
+        SELECT COUNT(*) from users;
+    `).Scan(&count)
+	if err != nil {
+		log.Println("Err counting users", err)
+	}
+
+	return count, err
+}
+
 func (d *SQLiteClient) InsertUser(user *linkzapp.User) (*linkzapp.User, error) {
 	db := d.client
 
@@ -94,9 +106,9 @@ func (d *SQLiteClient) InsertUser(user *linkzapp.User) (*linkzapp.User, error) {
         VALUES (?)
         RETURNING *
     `, user.Name).Scan(&newUser.Id, &newUser.Name)
-    if err != nil {
-        log.Println("Err inserting new user", err)
-    }
+	if err != nil {
+		log.Println("Err inserting new user", err)
+	}
 
 	return &newUser, err
 }

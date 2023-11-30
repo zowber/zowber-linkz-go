@@ -1,11 +1,11 @@
 package routes
 
 import (
-	"html/template"
+	"log"
 	"net/http"
 )
 
-// 
+//
 
 func indexHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -13,7 +13,20 @@ func indexHandler() http.HandlerFunc {
 			errorHandler(w, r, http.StatusNotFound, err)
 			return
 		}
-		tmpl := template.Must(template.ParseFiles("./templates/index.html"))
-		tmpl.Execute(w, err)
+
+		// check to see if a user already exists
+		userCount, err := db.CountUsers()
+		if err != nil {
+			log.Println("Err getting count of users", err)
+		}
+
+		log.Println("users:", userCount)
+
+		if userCount > 0 {
+            http.Redirect(w, r, "/links", http.StatusSeeOther)
+		} else {
+            http.Redirect(w, r, "/setup", http.StatusSeeOther)
+        }
+
 	}
 }
