@@ -16,10 +16,10 @@ func importHandler(appProps AppProps) http.HandlerFunc {
         type PageProps struct {
             Settings linkzapp.Settings
         }
-
         pageProps := PageProps{
             Settings: appProps.Settings,
         }
+
 		switch r.Method {
 		case "GET":
 			tmpl := template.Must(template.New("import.html").ParseFiles("./templates/head.html", "./templates/header.html", "./templates/import.html", "./templates/footer.html"))
