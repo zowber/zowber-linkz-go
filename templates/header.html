@@ -1,15 +1,27 @@
 {{define "header"}}
-<div class="container mt-3">
-    <div class="row">
-      <div class="col">
-        <h1>Zowber Linkz</h1>
-        <p>
-          <a href="https://github.com/zowber/zowber-linkz-go"
-            >github.com/zowber/zowber-linkz-go</a
-          >
-        </p>
-        <hr class="border border-secondary border-1 opacity-50" />
-      </div>
+<nav class="navbar navbar-expand-lg bg-primary mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">Zowber Links</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar"
+            aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbar">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="/links">Links</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/import">Import</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/export">Export</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/settings">Settings</a>
+                </li>
+            </ul>
+        </div>
     </div>
-  </div>
+</nav>
 {{end}}

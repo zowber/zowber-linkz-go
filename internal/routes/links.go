@@ -11,20 +11,21 @@ import (
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
 )
 
-type PageProps struct {
-	Links      []*linkzapp.Link
-	Page       int
-	PerPage    int
-	TotalLinks int
-	HasPrev    bool
-	PrevPage   int
-	HasNext    bool
-	NextPage   int
-	Settings   linkzapp.Settings
-}
-
-func linksHandler(appProps AppProps) http.HandlerFunc {
+func linksHandler(appProps linkzapp.AppProps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		type PageProps struct {
+			Links      []*linkzapp.Link
+			Page       int
+			PerPage    int
+			TotalLinks int
+			TotalPages int
+			HasPrev    bool
+			PrevPage   int
+			HasNext    bool
+			NextPage   int
+			Settings   linkzapp.Settings
+		}
 
 		totalLinks, _ := db.TotalLinksCount()
 
@@ -44,6 +45,13 @@ func linksHandler(appProps AppProps) http.HandlerFunc {
 		hasNext := (page * perPage) < totalLinks
 		nextPage := page + 1
 
+		var totalPages int
+		if totalLinks > 0 && totalLinks < perPage {
+			totalPages = 1
+		} else {
+			totalPages = totalLinks / perPage
+		}
+
 		offset := (page - 1) * perPage
 
 		links, err := db.Some(perPage, offset)
@@ -56,11 +64,12 @@ func linksHandler(appProps AppProps) http.HandlerFunc {
 			Page:       page,
 			PerPage:    perPage,
 			TotalLinks: totalLinks,
+			TotalPages: totalPages,
 			HasPrev:    hasPrev,
 			PrevPage:   prevPage,
 			HasNext:    hasNext,
 			NextPage:   nextPage,
-            Settings:   appProps.Settings,
+			Settings:   appProps.Settings,
 		}
 
 		accepts := make(map[string]bool)

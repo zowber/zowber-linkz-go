@@ -8,9 +8,8 @@ import (
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
 )
 
-func setupHandler(appProps AppProps) http.HandlerFunc {
+func setupHandler(appProps linkzapp.AppProps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("In the settings handler...")
 
 		type PageProps struct {
 			Settings linkzapp.Settings

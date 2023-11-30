@@ -11,7 +11,7 @@ import (
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
 )
 
-func exportHandler(appProps AppProps) http.HandlerFunc {
+func exportHandler(appProps linkzapp.AppProps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
         type PageProps struct {
             Settings linkzapp.Settings 

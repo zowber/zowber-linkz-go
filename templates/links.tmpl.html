@@ -6,7 +6,7 @@
 <body>
     {{ template "header" }}
 
-    <div class="container">
+    <div class="container mb-4">
         <div class="row" id="new-link">
             <div class="col">
                 <button class="btn btn-primary" hx-get="/link" hx-target="#new-link">
@@ -16,42 +16,55 @@
         </div>
     </div>
 
-    <div class="container mt-5">
-        <div class="row">
+    {{ template "links-list" .Links }}
+
+    <div class="container mt-4 mb-5">
+        <div class="row align-items-center">
             <div class="col">
+                <span>Page {{.Page}} of {{.TotalPages}} &middot; {{.TotalLinks}} links</span>
+            </div>
+            <div class="col d-flex justify-content-center">
                 <nav>
-                    <ul class="pagination">
-                        <li class="page-item"><a class="page-link" href="{{if .HasPrev}}/links?page={{.PrevPage}}&perpage={{.PerPage}}{{end}}">Previous</a></li>
-                        <li class="page-item"><a class="page-link" href="{{if .HasNext}}/links?page={{.NextPage}}&perpage={{.PerPage}}{{end}}">Next</a></li>
+                    <ul class="pagination mb-0">
+                        <li class="page-item"><a class="page-link"
+                                href="{{if .HasPrev}}/links?page={{.PrevPage}}&perpage={{.PerPage}}{{end}}">Previous</a>
+                        </li>
+                        <li class="page-item"><a class="page-link"
+                                href="{{if .HasNext}}/links?page={{.NextPage}}&perpage={{.PerPage}}{{end}}">Next</a>
+                        </li>
                     </ul>
                 </nav>
             </div>
-            <div class="col text-center">
-                <span>Page: {{.Page}} &middot; Links: {{.TotalLinks}}</span>
-            </div>
-            <div class="col text-end">
+            <div class="col d-flex justify-content-end">
                 <div class="dropdown">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
                         Per page ({{.PerPage}})
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item {{if eq .PerPage 25}}active{{end}}" href="/links?perpage=25">25</a></li>
-                        <li><a class="dropdown-item {{if eq .PerPage 50}}active{{end}}" href="/links?perpage=50">50</a></li>
-                        <li><a class="dropdown-item {{if eq .PerPage 100}}active{{end}}" href="/links?perpage=100">100</a></li>
-                        <li><a class="dropdown-item {{if eq .PerPage 200}}active{{end}}" href="/links?perpage=200">200</a></li>
+                        <li><a class="dropdown-item {{if eq .PerPage 25}}active{{end}}" href="/links?perpage=25">25</a>
+                        </li>
+                        <li><a class="dropdown-item {{if eq .PerPage 50}}active{{end}}" href="/links?perpage=50">50</a>
+                        </li>
+                        <li><a class="dropdown-item {{if eq .PerPage 100}}active{{end}}"
+                                href="/links?perpage=100">100</a></li>
+                        <li><a class="dropdown-item {{if eq .PerPage 200}}active{{end}}"
+                                href="/links?perpage=200">200</a></li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
 
-    {{ template "links-list" .Links }}
-
     {{ template "footer" }}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.6/dist/htmx.min.js"></script>
-    <script src="/static/js/links.js"></script>
+    <script>
+        const removeLabelInput = (id) => {
+            document.getElementById(id).remove()
+        }
+    </script>
 </body>
 
 </html>

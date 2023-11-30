@@ -16,9 +16,6 @@ import (
 // TODO: Stats/analytics?
 // TODO: First run/setup i.e., create tables, store some kind of config in the db, etc.
 
-type AppProps struct {
-	Settings linkzapp.Settings
-}
 
 var db, err = sqlite.NewDbClient()
 
@@ -50,10 +47,7 @@ var funcMap = template.FuncMap{
 
 func NewRouter() http.Handler {
 	settings, _ := db.GetSettings()
-	appProps := AppProps{Settings: *settings}
-
-	staticDir := "./static"
-	staticServer := http.FileServer(http.Dir(staticDir))
+	appProps := linkzapp.AppProps{Settings: *settings}
 
 	mux := http.NewServeMux()
     mux.Handle("/", indexHandler())
@@ -64,7 +58,6 @@ func NewRouter() http.Handler {
 	mux.Handle("/labels", labelsHandler())
 	mux.Handle("/label", labelHandler())
 	// mux.HandleFunc("/label/:id/links")
-	mux.Handle("/static", http.StripPrefix("/", staticServer))
 	mux.Handle("/settings", settingsHandler())
 	mux.Handle("/import", importHandler(appProps))
 	mux.Handle("/export", exportHandler(appProps))

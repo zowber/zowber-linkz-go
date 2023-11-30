@@ -13,6 +13,10 @@ type Link struct {
 	CreatedAt int     `json:"createdat"` //`bson:"createdat,omitempty"`
 }
 
+type AppProps struct {
+	Settings Settings
+}
+
 type Settings struct {
     UserId int
     Name string
