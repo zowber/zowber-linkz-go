@@ -7,14 +7,24 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
 )
 
-func exportHandler() http.HandlerFunc {
+func exportHandler(appProps AppProps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+        type PageProps struct {
+            Settings linkzapp.Settings 
+        }
+
+        pageProps := PageProps{
+            Settings: appProps.Settings,
+        }
+
 		switch r.Method {
 		case "GET":
 			tmpl := template.Must(template.New("export.html").ParseFiles("./templates/head.html", "./templates/header.html", "./templates/export.html", "./templates/footer.html"))
-			tmpl.ExecuteTemplate(w, "export", nil)
+			tmpl.ExecuteTemplate(w, "export", pageProps)
 		case "POST":
 			links, err := db.All()
 			if err != nil {

@@ -58,7 +58,7 @@ func NewRouter() http.Handler {
 	mux := http.NewServeMux()
     mux.Handle("/", indexHandler())
 	mux.Handle("/setup", setupHandler(appProps))
-	mux.Handle("/links", linksHandler())
+	mux.Handle("/links", linksHandler(appProps))
 	mux.Handle("/link/edit", editHandler())
 	mux.Handle("/link", linkHandler())
 	mux.Handle("/labels", labelsHandler())
@@ -67,7 +67,7 @@ func NewRouter() http.Handler {
 	mux.Handle("/static", http.StripPrefix("/", staticServer))
 	mux.Handle("/settings", settingsHandler())
 	mux.Handle("/import", importHandler(appProps))
-	mux.Handle("/export", exportHandler())
+	mux.Handle("/export", exportHandler(appProps))
 
 	return mux
 }

@@ -1,23 +1,13 @@
-{{ define "links" }}
-<!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
-
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Zowber Linkz</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/htmx.org@1.9.6/dist/htmx.min.js"></script>
-    <script src="/static/js/links.js"></script>
-</head>
+{{define "links"}}
+<!doctype html>
+<html data-bs-theme={{.Settings.ColorScheme}}>
+{{template "head"}}
 
 <body>
     {{ template "header" }}
 
     <div class="container">
         <div class="row" id="new-link">
-
             <div class="col">
                 <button class="btn btn-primary" hx-get="/link" hx-target="#new-link">
                     New Link
@@ -58,6 +48,10 @@
     {{ template "links-list" .Links }}
 
     {{ template "footer" }}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.6/dist/htmx.min.js"></script>
+    <script src="/static/js/links.js"></script>
 </body>
 
 </html>

@@ -11,7 +11,7 @@ import (
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
 )
 
-type PageData struct {
+type PageProps struct {
 	Links      []*linkzapp.Link
 	Page       int
 	PerPage    int
@@ -20,9 +20,10 @@ type PageData struct {
 	PrevPage   int
 	HasNext    bool
 	NextPage   int
+	Settings   linkzapp.Settings
 }
 
-func linksHandler() http.HandlerFunc {
+func linksHandler(appProps AppProps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		totalLinks, _ := db.TotalLinksCount()
@@ -50,7 +51,7 @@ func linksHandler() http.HandlerFunc {
 			log.Print(err.Error())
 		}
 
-		pageData := PageData{
+		pageProps := PageProps{
 			Links:      links,
 			Page:       page,
 			PerPage:    perPage,
@@ -59,6 +60,7 @@ func linksHandler() http.HandlerFunc {
 			PrevPage:   prevPage,
 			HasNext:    hasNext,
 			NextPage:   nextPage,
+            Settings:   appProps.Settings,
 		}
 
 		accepts := make(map[string]bool)
@@ -69,8 +71,8 @@ func linksHandler() http.HandlerFunc {
 		if accepts["text/html"] || accepts["*/*"] {
 			switch r.Method {
 			case "GET":
-				tmpl := template.Must(template.New("links.html").Funcs(funcMap).ParseFiles("./templates/header.html", "./templates/links.tmpl.html", "./templates/links-list.html", "./templates/link.html", "./templates/footer.html"))
-				tmpl.ExecuteTemplate(w, "links", pageData)
+				tmpl := template.Must(template.New("links.html").Funcs(funcMap).ParseFiles("./templates/head.html", "./templates/header.html", "./templates/links.tmpl.html", "./templates/links-list.html", "./templates/link.html", "./templates/footer.html"))
+				tmpl.ExecuteTemplate(w, "links", pageProps)
 			default:
 				errorHandler(w, r, http.StatusMethodNotAllowed, err)
 			}
@@ -79,7 +81,7 @@ func linksHandler() http.HandlerFunc {
 		if accepts["application/json"] {
 			switch r.Method {
 			case "GET":
-				jsonData, err := json.Marshal(pageData.Links)
+				jsonData, err := json.Marshal(pageProps.Links)
 				if err != nil {
 					log.Println(err)
 				}
