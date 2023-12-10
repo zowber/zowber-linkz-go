@@ -15,7 +15,7 @@ func (d *SQLiteClient) AllLabels() ([]linkzapp.Label, error) {
     rows, err := db.Query(`
         SELECT *
         FROM labels
-        ORDER BY name ASC    
+        ORDER BY name COLLATE NOCASE ASC 
     `)
     if err != nil {
         log.Println("Err getting labels from db")
