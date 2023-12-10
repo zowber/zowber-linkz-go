@@ -55,7 +55,7 @@ func NewRouter() http.Handler {
 	mux.Handle("/links", linksHandler(appProps))
 	mux.Handle("/link/edit", editHandler())
 	mux.Handle("/link", linkHandler())
-	mux.Handle("/labels", labelsHandler())
+	mux.Handle("/labels", labelsHandler(appProps))
 	mux.Handle("/label", labelHandler())
 	// mux.HandleFunc("/label/:id/links")
 	mux.Handle("/settings", settingsHandler())
