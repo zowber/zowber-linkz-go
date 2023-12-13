@@ -2,7 +2,6 @@ package routes
 
 import (
 	"html/template"
-	"log"
 	"net/http"
 
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
@@ -10,9 +9,15 @@ import (
 
 func labelsHandler(appProps linkzapp.AppProps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		type LabelWithLinkCount struct {
+			Id        int
+			Name      string
+			LinkCount int
+		}
+
 		type PageProps struct {
-			Settings linkzapp.Settings
-			Labels   []linkzapp.Label
+			Settings            linkzapp.Settings
+			LabelsWithLinkCount []LabelWithLinkCount
 		}
 
 		labels, err := db.AllLabels()
@@ -20,15 +25,18 @@ func labelsHandler(appProps linkzapp.AppProps) http.HandlerFunc {
 			errorHandler(w, r, http.StatusInternalServerError, err)
 		}
 
-        for _, label := range labels {
-            count, _ := 
-            db.TotalLinksCountForLabel(*label.Id)
-            log.Println("link count for label name", label.Name, count)    
-        }
+		var labelsWithLinkCount []LabelWithLinkCount
+		for _, label := range labels {
+			linkCount, _ := db.TotalLinksCountForLabel(*label.Id)
+            if label.Name == "" {
+                label.Name = "Unlabeled"
+            }
+			labelsWithLinkCount = append(labelsWithLinkCount, LabelWithLinkCount{Id: *label.Id, Name: label.Name, LinkCount: linkCount})
+		}
 
 		pageProps := PageProps{
-			Settings: appProps.Settings,
-			Labels:   labels,
+			Settings:            appProps.Settings,
+			LabelsWithLinkCount: labelsWithLinkCount,
 		}
 
 		switch r.Method {

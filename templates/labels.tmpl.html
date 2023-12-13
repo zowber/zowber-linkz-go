@@ -6,15 +6,9 @@
 <body>
     {{ template "header"}}
 
-    <ul>
-        {{ range .Labels }}
-        <li>
-            <a href="/label/{{.Id}}">
-                <span id="label-{{.Id}}"class="badge bg-secondary me-2">{{ .Name }}</span>
-            </a>
-        </li>
+        {{ range .LabelsWithLinkCount }}
+        <h3 id="label-{{.Id}}">{{ .Name }} ({{ .LinkCount }})</h3>
         {{end}}
-    </ul>
     {{ template "footer" }}
 </body>
 
