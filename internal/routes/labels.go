@@ -2,6 +2,7 @@ package routes
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
@@ -18,6 +19,12 @@ func labelsHandler(appProps linkzapp.AppProps) http.HandlerFunc {
 		if err != nil {
 			errorHandler(w, r, http.StatusInternalServerError, err)
 		}
+
+        for _, label := range labels {
+            count, _ := 
+            db.TotalLinksCountForLabel(*label.Id)
+            log.Println("link count for label name", label.Name, count)    
+        }
 
 		pageProps := PageProps{
 			Settings: appProps.Settings,

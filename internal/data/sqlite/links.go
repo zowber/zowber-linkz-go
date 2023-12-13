@@ -22,6 +22,22 @@ func (d *SQLiteClient) TotalLinksCount() (int, error) {
 	return totalLinksCount, err
 }
 
+func (d *SQLiteClient) TotalLinksCountForLabel(labelId int) (int, error) {
+    db := d.client
+
+    var totalLinksCount int
+    err := db.QueryRow(`
+        SELECT COUNT(*)
+        FROM links
+        INNER JOIN link_labels ON id = link_labels.link_id
+        WHERE link_labels.label_id = ?;
+    `, labelId).Scan(&totalLinksCount)
+    if err != nil {
+        log.Println("Err counting labels for link", err)
+    }
+    return totalLinksCount, err
+}
+
 func (d *SQLiteClient) All() ([]*linkzapp.Link, error) {
 	db := d.client
 
