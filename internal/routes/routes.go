@@ -14,8 +14,6 @@ import (
 // TODO: Figure out the one true CSV format for import/export
 // TODO: Implement /label/:id/links
 // TODO: Stats/analytics?
-// TODO: First run/setup i.e., create tables, store some kind of config in the db, etc.
-
 
 var db, err = sqlite.NewDbClient()
 
@@ -57,7 +55,7 @@ func NewRouter() http.Handler {
 	mux.Handle("/link", linkHandler())
 	mux.Handle("/labels", labelsHandler(appProps))
 	mux.Handle("/label", labelHandler())
-	// mux.HandleFunc("/label/:id/links")
+	// mux.HandleFunc("/label/:id/links", labelLinksHandler(appProps))
 	mux.Handle("/settings", settingsHandler())
 	mux.Handle("/import", importHandler(appProps))
 	mux.Handle("/export", exportHandler(appProps))

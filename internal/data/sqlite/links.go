@@ -56,15 +56,31 @@ func (d *SQLiteClient) Some(limit int, offset int) ([]*linkzapp.Link, error) {
 	db := d.client
 
 	rows, err := db.Query(`
-		SELECT * FROM links
+		SELECT * FROM 
         ORDER BY createdat DESC
         LIMIT ? OFFSET ?;
 	`, limit, offset)
 	if err != nil {
-		log.Println(err)
+		log.Println("Err getting links with limit and offser", err)
 	}
 
 	return d.processLinkRows(rows), err
+}
+
+func (d *SQLiteClient) GetLinksByLabel(labelId string) ([]*linkzapp.Link, error) {
+    db := d.client
+    
+    rows, err := db.Query(`
+        SELECT *
+        FROM links
+        INNER JOIN link_labels ON id = link_labels.link_id
+        WHERE link_label_id = ?
+    `, labelId)
+    if err != nil {
+        log.Println("Err getting links by label name", err)
+    }
+
+    return d.processLinkRows(rows), err
 }
 
 func (d *SQLiteClient) processLinkRows(rows *sql.Rows) []*linkzapp.Link {
