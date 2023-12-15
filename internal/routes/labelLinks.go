@@ -20,6 +20,10 @@ func labelLinksHandler(appProps linkzapp.AppProps) http.HandlerFunc {
 			Links:    links,
 		}
 
+        // TODO: with go 1.22
+        //id := r.PathValue("id")
+        //fmt.Println("id is:", id)
+
 		switch r.Method {
 		case "GET":
 			tmpl := template.Must(template.New("links-list").ParseFiles("./templates/links-list.html"))

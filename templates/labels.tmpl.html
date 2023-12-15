@@ -7,7 +7,8 @@
     {{ template "header"}}
 
         {{ range .LabelsWithLinkCount }}
-        <h3 id="label-{{.Id}}">{{ .Name }} ({{ .LinkCount }})</h3>
+        <h3 id="label-{{.Id}}">{{ .Name }} ({{ .LinkCount }})</h3><a href="/labels/{{.Id}}/links" hx-get="/labels/{{.Id}}/links" hx-target="#label-{{.Id}}-links">Show links</a>
+        <div id="label-{{.Id}}-links"></div>
         {{end}}
     {{ template "footer" }}
 </body>
