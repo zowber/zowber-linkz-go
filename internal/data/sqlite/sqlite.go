@@ -12,7 +12,7 @@ type SQLiteClient struct {
 }
 
 func NewDbClient() (*SQLiteClient, error) {
-	db, err := sql.Open("sqlite3", "panday.sqlite")
+	db, err := sql.Open("sqlite3", "newdb.sqlite")
 	if err != nil {
 		log.Println("Error opening db", err)
 	}

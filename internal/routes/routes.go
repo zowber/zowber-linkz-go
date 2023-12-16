@@ -10,7 +10,6 @@ import (
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
 )
 
-// TODO: Sort on import so ascending dated links have ascending ids
 // TODO: Figure out the one true CSV format for import/export
 // TODO: Implement /label/:id/links
 // TODO: Stats/analytics?
@@ -60,6 +59,6 @@ func NewRouter() http.Handler {
 	mux.Handle("/settings", settingsHandler())
 	mux.Handle("/import", importHandler(appProps))
 	mux.Handle("/export", exportHandler(appProps))
-
+    mux.Handle("/stats", statsHandler(appProps))
 	return mux
 }

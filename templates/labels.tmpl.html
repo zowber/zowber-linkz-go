@@ -6,10 +6,16 @@
 <body>
     {{ template "header"}}
 
-        {{ range .LabelsWithLinkCount }}
-        <h3 id="label-{{.Id}}">{{ .Name }} ({{ .LinkCount }})</h3><a href="/labels/{{.Id}}/links" hx-get="/labels/{{.Id}}/links" hx-target="#label-{{.Id}}-links">Show links</a>
-        <div id="label-{{.Id}}-links"></div>
-        {{end}}
+    <div class="container mb-4">
+        <div class="row" id="new-link">
+            <div class="col">
+                {{ range .LabelsWithLinkCount }}
+                <h3 id="label-{{.Id}}" class="mt-3">{{ .Name }} ({{ .LinkCount }})</h3><a href="/labels/{{.Id}}/links" hx-get="/labels/{{.Id}}/links" hx-target="#label-{{.Id}}-links">Show links</a>
+                <div id="label-{{.Id}}-links"></div>
+                {{end}}
+            </div>
+        </div>
+    </div>
     {{ template "footer" }}
 </body>
 

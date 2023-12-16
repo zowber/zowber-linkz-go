@@ -56,12 +56,12 @@ func (d *SQLiteClient) Some(limit int, offset int) ([]*linkzapp.Link, error) {
 	db := d.client
 
 	rows, err := db.Query(`
-		SELECT * FROM 
+		SELECT * FROM links 
         ORDER BY createdat DESC
         LIMIT ? OFFSET ?;
 	`, limit, offset)
 	if err != nil {
-		log.Println("Err getting links with limit and offser", err)
+		log.Println("Err getting links with limit and offset", err)
 	}
 
 	return d.processLinkRows(rows), err

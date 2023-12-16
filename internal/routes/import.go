@@ -6,10 +6,13 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/zowber/zowber-linkz-go/pkg/linkzapp"
 )
+
+// TODO: Sort on import so ascending dated links have ascending ids
 
 func importHandler(appProps linkzapp.AppProps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +65,10 @@ func importHandler(appProps linkzapp.AppProps) http.HandlerFunc {
 					link.CreatedAt = int(time.Now().Unix())
 					links = append(links, &link)
 				}
-			}
+		    }
+            
+            // care, sorts in place
+            sort.Slice(links, func(i, j int) bool { return links[i].CreatedAt < links[j].CreatedAt })
 
 			if fileMime == "application/json" {
 				decoder := json.NewDecoder(file)
@@ -89,6 +95,7 @@ func importHandler(appProps linkzapp.AppProps) http.HandlerFunc {
 				tmpl := template.Must(template.New("links-list.html").Funcs(funcMap).ParseFiles("./templates/links-list.html", "./templates/link.html"))
 				tmpl.ExecuteTemplate(w, "links-list", links)
 			}
+            
 
 			if action == "import" {
 				log.Println("import")
