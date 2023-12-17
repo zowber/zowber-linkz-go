@@ -1,6 +1,28 @@
 {{ define "stats" }}
 <!doctype html>
+<html data-bs-theme="{{.Settings.ColorScheme}}">
+{{ template "head" }}
 
-Stats
+<body>
+    {{ template "header" }}
 
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h2>Stats</h2>
+                <h3>Total links</h3>
+                <p>{{.TotalLinks}}</p>
+                <h3>Links by month/year</h3>
+                {{ range .TotalLinksByYearAndMonth.Years }}
+                {{ .Year }} {{ .Total }}
+                    {{ range .Months }}
+                    {{ .Month }} {{ .Total }}
+                    {{ end }}
+                {{ end }}
+                <h3>Popular tags by month/year</h3>
+            </div>
+        </div>
+    </div>
+    {{ template "footer"}}
+</body>
 {{end}}

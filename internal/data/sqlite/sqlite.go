@@ -17,15 +17,13 @@ func NewDbClient() (*SQLiteClient, error) {
 		log.Println("Error opening db", err)
 	}
 
-	// TODO: Check if tables exist, if not create them
-
 	return &SQLiteClient{db}, err
 }
 
 func (d *SQLiteClient) CreateTables() error {
-    db := d.client
-	
-    stmt := `
+	db := d.client
+
+	stmt := `
         CREATE TABLE "links" (
     	"id"	INTEGER NOT NULL,
     	"name"	TEXT NOT NULL,
@@ -59,7 +57,7 @@ func (d *SQLiteClient) CreateTables() error {
 	    CONSTRAINT settings_FK FOREIGN KEY (user_id) REFERENCES users(id)
         );
     `
-    _, err := db.Exec(stmt)
+	_, err := db.Exec(stmt)
 	if err != nil {
 		log.Println("Err creatng db tables", err)
 	}
