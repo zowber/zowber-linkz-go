@@ -19,7 +19,19 @@
                     {{ .Month }} {{ .Total }}
                     {{ end }}
                 {{ end }}
-                <h3>Popular tags by month/year</h3>
+                <h3>Popular labels by month/year</h3>
+                {{ range .PopularLabelsByYearAndMonth.Years }}
+                    {{ .Year }}
+                    {{ range .Labels }}
+                        {{ . }}
+                    {{ end }}
+                    {{ range .Months }}
+                        {{ .Month }}
+                        {{ range .Labels }}
+                            {{.}}
+                        {{ end }}
+                    {{ end}}
+                {{ end }}
             </div>
         </div>
     </div>

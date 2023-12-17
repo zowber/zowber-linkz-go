@@ -25,10 +25,26 @@ func statsHandler(appProps linkzapp.AppProps) http.HandlerFunc {
 			Years []TotalLinksByYear
 		}
 
+		type PopularLabelsByMonth struct {
+			Month  int
+			Labels []string
+		}
+
+		type PopularLabelsByYear struct {
+			Year   int
+			Labels []string
+			Months []PopularLabelsByMonth
+		}
+
+		type PopularLabelsByYearAndMonth struct {
+			Years []PopularLabelsByYear
+		}
+
 		type PageProps struct {
-			Settings                 linkzapp.Settings
-			TotalLinks               int
-			TotalLinksByYearAndMonth TotalLinksByYearAndMonth
+			Settings                    linkzapp.Settings
+			TotalLinks                  int
+			TotalLinksByYearAndMonth    TotalLinksByYearAndMonth
+			PopularLabelsByYearAndMonth PopularLabelsByYearAndMonth
 		}
 
 		// get settings from DB
@@ -67,10 +83,26 @@ func statsHandler(appProps linkzapp.AppProps) http.HandlerFunc {
 		// Jan (ai), Feb (dubai)...
 		// 2022...
 
+		popularLabelsByYearAndMonth := PopularLabelsByYearAndMonth{
+			Years: []PopularLabelsByYear{
+				{
+					Year:   2023,
+					Labels: []string{"ai", "spoderman", "dubai"},
+					Months: []PopularLabelsByMonth{
+						{
+							Month:  01,
+							Labels: []string{"ai"},
+						},
+					},
+				},
+			},
+		}
+
 		props := PageProps{
-			Settings:                 *settings,
-			TotalLinks:               totalLinks,
-			TotalLinksByYearAndMonth: totalLinksByYearAndMonth,
+			Settings:                    *settings,
+			TotalLinks:                  totalLinks,
+			TotalLinksByYearAndMonth:    totalLinksByYearAndMonth,
+			PopularLabelsByYearAndMonth: popularLabelsByYearAndMonth,
 		}
 
 		tmpl := template.Must(template.New("stats").ParseFiles("./templates/head.html", "./templates/header.html", "./templates/stats.tmpl.html", "./templates/footer.html"))
